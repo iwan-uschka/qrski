@@ -11,12 +11,6 @@ macOS native QR code generator. Built with Swift + SwiftUI, no external dependen
 - Copy SVG to clipboard
 - All settings persisted between launches
 
-## Running (development)
-
-Open `Package.swift` in Xcode (double-click or `open Package.swift`), then Build & Run (⌘R).
-
-Or from the terminal: `swift build && .build/debug/QRski`
-
 ## Building a release app
 
 ```bash
