@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Swift / SPM
+.build/
+/Packages
+.swiftpm/
+
+# Xcode
+xcuserdata/
+DerivedData/
+
+# Build artifacts
+QRski.app/
+QRski.zip

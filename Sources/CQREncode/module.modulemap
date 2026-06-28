@@ -1,0 +1,5 @@
+module CQREncode {
+    header "qrencode.h"
+    header "qrencode_inner.h"
+    export *
+}
