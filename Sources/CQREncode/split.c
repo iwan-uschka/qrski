@@ -138,7 +138,7 @@ static int Split_eatAn(const char *string, QRinput *input, QRencodeMode hint)
 			}
 			dif = QRinput_estimateBitsModeAn((int)(p - string)) /* + 4 + la */
 				+ QRinput_estimateBitsModeNum((int)(q - p)) + 4 + ln
-				+ (isalnum(*q)?(4 + ln):0)
+				+ (isalnum(*q)?(4 + la):0)
 				- QRinput_estimateBitsModeAn((int)(q - string)) /* - 4 - la */;
 			if(dif < 0) {
 				break;
@@ -291,7 +291,7 @@ static char *dupAndToUpper(const char *str, QRencodeMode hint)
 			p += 2;
 		} else {
 			if (*p >= 'a' && *p <= 'z') {
-				*p = (char)((int)*p - 32);
+				*p = (char)(*p - ('a' - 'A'));
 			}
 			p++;
 		}

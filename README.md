@@ -52,6 +52,9 @@ Recipients right-click → Open once to bypass Gatekeeper, then it runs normally
 | `ControlsView.swift` | All parameters + export buttons |
 | `QRPreviewView.swift` | `Canvas` rendering with zoom slider + `MagnificationGesture` |
 | `AppCommands.swift` | `@FocusedValue` pattern for menu bar ↔ AppState bridge |
+| **QRskiCore target** | |
+| `QRskiCore/QRCodeGenerator.swift` | Core QR generation logic (shared library target) |
+| `QRskiCore/ExportCore.swift` | Core export logic (shared library target) |
 
 ## Dependencies
 
@@ -61,7 +64,7 @@ Key C API used:
 
 ```c
 QRinput *QRinput_new2(int version, QRecLevel level);  // version 0 = auto
-QRinput_append(input, QR_MODE_8, len, utf8_bytes);
+int QRinput_append(input, QR_MODE_8, len, utf8_bytes);
 QRcode *QRcode_encodeMask(input, mask);  // mask -1 = auto, 0–7 = specific
 // qrcode->data[y*w + x] & 0x01 == 1 → dark module
 QRcode_free(qrcode); QRinput_free(input);

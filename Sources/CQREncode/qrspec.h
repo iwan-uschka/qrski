@@ -103,7 +103,7 @@ extern int QRspec_maximumWords(QRencodeMode mode, int version);
  * {# of type1 blocks, # of data code, # of ecc code,
  *  # of type2 blocks, # of data code}
  */
-void QRspec_getEccSpec(int version, QRecLevel level, int spec[5]);
+extern void QRspec_getEccSpec(int version, QRecLevel level, int spec[5]);
 
 #define QRspec_rsBlockNum(__spec__) (__spec__[0] + __spec__[3])
 #define QRspec_rsBlockNum1(__spec__) (__spec__[0])

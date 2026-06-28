@@ -22,7 +22,6 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -92,6 +91,8 @@ static void BitStream_writeNum(unsigned char *dest, size_t bits, unsigned int nu
 	unsigned int mask;
 	size_t i;
 	unsigned char *p;
+
+	if(bits == 0 || bits > (sizeof(unsigned int) * 8)) return;
 
 	p = dest;
 	mask = 1U << (bits - 1);

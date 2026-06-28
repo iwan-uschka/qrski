@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "mqrspec.h"
 
@@ -61,6 +60,9 @@ int MQRspec_getDataLengthBit(int version, QRecLevel level)
 	int w;
 	int ecc;
 
+	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
+	if(level < QR_ECLEVEL_L || level > QR_ECLEVEL_H) return 0;
+
 	w = mqrspecCapacity[version].width - 1;
 	ecc = mqrspecCapacity[version].ec[level];
 	if(ecc == 0) return 0;
@@ -74,11 +76,14 @@ int MQRspec_getDataLength(int version, QRecLevel level)
 
 int MQRspec_getECCLength(int version, QRecLevel level)
 {
+	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
+	if(level < QR_ECLEVEL_L || level > QR_ECLEVEL_H) return 0;
 	return mqrspecCapacity[version].ec[level];
 }
 
 int MQRspec_getWidth(int version)
 {
+	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
 	return mqrspecCapacity[version].width;
 }
 
@@ -98,6 +103,7 @@ static const int lengthTableBits[4][4] = {
 
 int MQRspec_lengthIndicator(QRencodeMode mode, int version)
 {
+	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
 	return lengthTableBits[mode][version - 1];
 }
 
@@ -106,6 +112,7 @@ int MQRspec_maximumWords(QRencodeMode mode, int version)
 	int bits;
 	int words;
 
+	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
 	bits = lengthTableBits[mode][version - 1];
 	words = (1 << bits) - 1;
 	if(mode == QR_MODE_KANJI) {
@@ -142,7 +149,7 @@ unsigned int MQRspec_getFormatInfo(int mask, int version, QRecLevel level)
 
 	if(mask < 0 || mask > 3) return 0;
 	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
-	if(level == QR_ECLEVEL_H) return 0;
+	if(level < QR_ECLEVEL_L || level >= QR_ECLEVEL_H) return 0;
 	type = typeTable[version][level];
 	if(type < 0) return 0;
 

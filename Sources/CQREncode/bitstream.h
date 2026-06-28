@@ -22,6 +22,8 @@
 #ifndef BITSTREAM_H
 #define BITSTREAM_H
 
+#include <stddef.h>   /* size_t */
+
 typedef struct {
 	size_t length;
 	size_t datasize;
@@ -35,8 +37,8 @@ extern BitStream *BitStream_newWithBits(size_t size, unsigned char *bits);
 extern int BitStream_append(BitStream *bstream, BitStream *arg);
 extern int BitStream_appendNum(BitStream *bstream, size_t bits, unsigned int num);
 extern int BitStream_appendBytes(BitStream *bstream, size_t size, unsigned char *data);
-#define BitStream_size(__bstream__) (__bstream__->length)
-#define BitStream_reset(__bstream__) (__bstream__->length = 0)
+#define BitStream_size(bstream_)   ((bstream_)->length)
+#define BitStream_reset(bstream_)  ((bstream_)->length = 0)
 extern unsigned char *BitStream_toByte(BitStream *bstream);
 extern void BitStream_free(BitStream *bstream);
 

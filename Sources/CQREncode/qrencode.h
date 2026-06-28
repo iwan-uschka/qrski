@@ -81,7 +81,7 @@
  *     // do something
  *     entry = entry->next;
  * }
- * QRcode_List_free(entry);
+ * QRcode_List_free(qrcodes);
  * \endcode
  *
  * Instead of using auto-parsing functions, you can construct your own
@@ -134,7 +134,7 @@ typedef enum {
 #define QRSPEC_VERSION_MAX 40
 
 /**
- * Maximum version (size) of QR-code symbol.
+ * Maximum version (size) of Micro QR-code symbol.
  */
 #define MQRSPEC_VERSION_MAX 4
 
@@ -550,7 +550,7 @@ extern void QRcode_APIVersion(int *major_version, int *minor_version, int *micro
  * @return a string identifies the library version. The string is held by the
  * library. Do NOT free it.
  */
-extern char *QRcode_APIVersionString(void);
+extern const char *QRcode_APIVersionString(void);
 
 /**
  * @deprecated

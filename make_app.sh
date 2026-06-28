@@ -44,7 +44,7 @@ cat > QRski.app/Contents/Info.plist << 'EOF'
 EOF
 
 echo "→ Ad-hoc signing..."
-codesign --sign - --force --deep QRski.app
+codesign --sign - --force QRski.app
 
 echo "✓ QRski.app is ready"
 echo "  To share: zip -r QRski.zip QRski.app"

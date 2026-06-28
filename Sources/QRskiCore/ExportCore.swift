@@ -13,14 +13,15 @@ public enum ExportCore {
             svg += "<rect width=\"\(total)\" height=\"\(total)\" fill=\"\(hexString(bg))\"/>"
         }
 
-        var path = ""
+        var segments: [String] = []
+        segments.reserveCapacity(matrix.width * matrix.width)
         for y in 0..<matrix.width {
             for x in 0..<matrix.width where matrix.modules[y][x] {
-                path += "M\(x + quietZone) \(y + quietZone)h1v1h-1z"
+                segments.append("M\(x + quietZone) \(y + quietZone)h1v1h-1z")
             }
         }
-        if !path.isEmpty {
-            svg += "<path fill=\"\(fgHex)\" d=\"\(path)\"/>"
+        if !segments.isEmpty {
+            svg += "<path fill=\"\(fgHex)\" d=\"\(segments.joined())\"/>"
         }
         svg += "</svg>"
         return svg
@@ -45,27 +46,32 @@ public enum ExportCore {
         }
 
         ctx.setFillColor(cgColor(fg))
+        var rects: [CGRect] = []
+        rects.reserveCapacity(matrix.width * matrix.width)
         for y in 0..<matrix.width {
             for x in 0..<matrix.width where matrix.modules[y][x] {
-                let px = (x + quietZone) * moduleSize
-                let py = (y + quietZone) * moduleSize
-                ctx.fill(CGRect(x: px, y: py, width: moduleSize, height: moduleSize))
+                let px = CGFloat((x + quietZone) * moduleSize)
+                let py = CGFloat((y + quietZone) * moduleSize)
+                rects.append(CGRect(x: px, y: py, width: CGFloat(moduleSize), height: CGFloat(moduleSize)))
             }
         }
+        ctx.fill(rects)
 
         guard let cgImg = ctx.makeImage() else { return nil }
         return NSBitmapImageRep(cgImage: cgImg).representation(using: .png, properties: [:])
     }
 
-    public static func hexString(_ color: Color) -> String {
-        let ns = NSColor(color).usingColorSpace(.sRGB) ?? NSColor(color)
+    static func hexString(_ color: Color) -> String {
+        let ns = NSColor(color).usingColorSpace(.sRGB)
+               ?? NSColor(color).usingColorSpace(.genericRGB)
+               ?? NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1)
         let r = Int((ns.redComponent * 255).rounded())
         let g = Int((ns.greenComponent * 255).rounded())
         let b = Int((ns.blueComponent * 255).rounded())
         return String(format: "#%02X%02X%02X", r, g, b)
     }
 
-    public static func cgColor(_ color: Color) -> CGColor {
+    static func cgColor(_ color: Color) -> CGColor {
         NSColor(color).cgColor
     }
 }

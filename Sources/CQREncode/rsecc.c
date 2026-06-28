@@ -118,7 +118,7 @@ int RSECC_encode(size_t data_length, size_t ecc_length, const unsigned char *dat
 	pthread_mutex_unlock(&RSECC_mutex);
 #endif
 
-	if(ecc_length > max_length) return -1;
+	if(ecc_length < min_length || ecc_length > max_length) return -1;
 
 	memset(ecc, 0, ecc_length);
 #if HAVE_LIBPTHREAD

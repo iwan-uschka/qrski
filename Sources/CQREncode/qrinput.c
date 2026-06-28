@@ -92,12 +92,15 @@ static QRinput_List *QRinput_List_dup(QRinput_List *entry)
 
 	n->mode = entry->mode;
 	n->size = entry->size;
-	n->data = (unsigned char *)malloc((size_t)n->size);
-	if(n->data == NULL) {
-		free(n);
-		return NULL;
+	n->data = NULL;
+	if(n->size > 0) {
+		n->data = (unsigned char *)malloc((size_t)n->size);
+		if(n->data == NULL) {
+			free(n);
+			return NULL;
+		}
+		memcpy(n->data, entry->data, (size_t)entry->size);
 	}
-	memcpy(n->data, entry->data, (size_t)entry->size);
 	n->bstream = NULL;
 	n->next = NULL;
 
@@ -818,7 +821,7 @@ static int QRinput_encodeModeECI(QRinput_List *entry, BitStream *bstream)
 
 int QRinput_check(QRencodeMode mode, int size, const unsigned char *data)
 {
-	if((mode == QR_MODE_FNC1FIRST && size < 0) || size <= 0) return -1;
+	if(size < 0 || (mode != QR_MODE_FNC1FIRST && size == 0)) return -1;
 
 	switch(mode) {
 		case QR_MODE_NUM:
@@ -1255,6 +1258,12 @@ static int QRinput_insertFNC1Header(QRinput *input)
 	}
 	if(entry == NULL) {
 		return -1;
+	}
+
+	if(input->head == NULL) {
+		input->head = entry;
+		input->tail = entry;
+		return 0;
 	}
 
 	if(input->head->mode != QR_MODE_STRUCTURE && input->head->mode != QR_MODE_ECI) {

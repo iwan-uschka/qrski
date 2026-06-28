@@ -64,7 +64,7 @@ final class AppState {
         }
         if let result = QRCodeGenerator.generate(
             text: inputText, version: version,
-            maskPattern: maskPattern, ecl: ecl.cValue
+            maskPattern: maskPattern, ecl: ecl
         ) {
             matrix = result.matrix
             actualVersion = result.version

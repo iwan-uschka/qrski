@@ -119,7 +119,7 @@ struct ControlsView: View {
     }
 
     private var exportSection: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Button("Export PNG…") {
                 guard let matrix = appState.matrix else { return }
                 ExportManager.exportPNG(

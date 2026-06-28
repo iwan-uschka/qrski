@@ -1,7 +1,7 @@
 /**
  * qrencode - QR Code encoder
  *
- * Header for test use
+ * Internal symbols exposed for Swift bridging and testing.
  * Copyright (C) 2006-2017 Kentaro Fukuchi <kentaro@fukuchi.org>
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
 #include "qrencode.h"
 
 /**
- * This header file includes definitions for test use.
+ * This header exposes internal qrencode symbols for Swift bridging (QRcode_encodeMask)
+ * and unit testing. Not part of the public API surface.
  */
 
 /******************************************************************************

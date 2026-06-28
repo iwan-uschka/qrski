@@ -119,10 +119,9 @@ struct QRPreviewView: View {
 
     private func drawCheckerboard(ctx: GraphicsContext, size: Double) {
         let sq: Double = 8
-        let cols = Int(ceil(size / sq))
-        let rows = Int(ceil(size / sq))
-        for row in 0..<rows {
-            for col in 0..<cols {
+        let tiles = Int(ceil(size / sq))
+        for row in 0..<tiles {
+            for col in 0..<tiles {
                 let color: Color = (row + col) % 2 == 0 ? .white : Color(white: 0.85)
                 ctx.fill(
                     Path(CGRect(x: Double(col) * sq, y: Double(row) * sq, width: sq, height: sq)),
