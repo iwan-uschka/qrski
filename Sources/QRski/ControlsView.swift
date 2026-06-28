@@ -1,4 +1,5 @@
 import SwiftUI
+import QRskiCore
 
 struct ControlsView: View {
     @Bindable var appState: AppState

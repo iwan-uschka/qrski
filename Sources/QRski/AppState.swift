@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-import CQREncode
+import QRskiCore
 
 @Observable
 final class AppState {
@@ -83,19 +83,5 @@ final class AppState {
     private func loadColor(key: String) -> Color? {
         guard let c = ud.array(forKey: key) as? [Double], c.count == 4 else { return nil }
         return Color(red: c[0], green: c[1], blue: c[2], opacity: c[3])
-    }
-}
-
-enum ErrorCorrectionLevel: Int, CaseIterable, Identifiable {
-    case L = 0, M = 1, Q = 2, H = 3
-    var id: Int { rawValue }
-    var label: String { ["L – Low", "M – Medium", "Q – Quartile", "H – High"][rawValue] }
-    var cValue: QRecLevel {
-        switch self {
-        case .L: QR_ECLEVEL_L
-        case .M: QR_ECLEVEL_M
-        case .Q: QR_ECLEVEL_Q
-        case .H: QR_ECLEVEL_H
-        }
     }
 }

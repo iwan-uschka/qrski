@@ -1,4 +1,5 @@
 import SwiftUI
+import QRskiCore
 
 struct QRPreviewView: View {
     var appState: AppState

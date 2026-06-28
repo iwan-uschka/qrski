@@ -17,11 +17,21 @@ let package = Package(
                 .define("VERSION", to: "\"4.1.1\"")
             ]
         ),
+        .target(
+            name: "QRskiCore",
+            dependencies: ["CQREncode"],
+            path: "Sources/QRskiCore"
+        ),
         .executableTarget(
             name: "QRski",
-            dependencies: ["CQREncode"],
+            dependencies: ["CQREncode", "QRskiCore"],
             path: "Sources/QRski",
             resources: [.process("Assets.xcassets")]
+        ),
+        .testTarget(
+            name: "QRskiTests",
+            dependencies: ["QRskiCore"],
+            path: "Tests/QRskiTests"
         ),
     ],
     swiftLanguageModes: [.v5]
