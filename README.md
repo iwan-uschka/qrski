@@ -25,37 +25,6 @@ bash make_app.sh
 
 This produces `QRski.app` in the project root — a release binary assembled into a proper macOS app bundle, compiled asset catalog (icon), and ad-hoc signed.
 
-**To share with colleagues:**
-```bash
-zip -r QRski.zip QRski.app
-```
-
-Recipients right-click → Open once to bypass Gatekeeper, then it runs normally.
-
-## Menu bar
-
-| Menu | Item | Shortcut |
-|---|---|---|
-| File | Export PNG… | ⌘⇧E |
-| File | Export SVG… | — |
-| Edit | Copy SVG | ⌘K |
-
-## Architecture
-
-| File | Role |
-|---|---|
-| `QRski.swift` | `@main` App entry, WindowGroup scene, menu commands |
-| `AppState.swift` | `@Observable` model; UserDefaults persistence; triggers regeneration on change |
-| `QRCodeGenerator.swift` | Thin Swift wrapper over libqrencode C API → `QRMatrix` |
-| `ExportManager.swift` | PNG via CoreGraphics, SVG hand-rolled single `<path>`, NSSavePanel |
-| `ContentView.swift` | `HSplitView` — controls left, preview right |
-| `ControlsView.swift` | All parameters + export buttons |
-| `QRPreviewView.swift` | `Canvas` rendering with zoom slider + `MagnificationGesture` |
-| `AppCommands.swift` | `@FocusedValue` pattern for menu bar ↔ AppState bridge |
-| **QRskiCore target** | |
-| `QRskiCore/QRCodeGenerator.swift` | Core QR generation logic (shared library target) |
-| `QRskiCore/ExportCore.swift` | Core export logic (shared library target) |
-
 ## Dependencies
 
 **libqrencode 4.1.1** — vendored in `Sources/CQREncode/`, no brew required.
