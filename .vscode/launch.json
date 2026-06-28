@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:qrski}",
+      "name": "Debug QRski",
+      "target": "QRski",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug QRski"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:qrski}",
+      "name": "Release QRski",
+      "target": "QRski",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release QRski"
+    }
+  ]
+}
