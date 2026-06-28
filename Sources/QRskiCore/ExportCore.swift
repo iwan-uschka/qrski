@@ -35,6 +35,10 @@ public enum ExportCore {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
+        // CGContext origin is bottom-left (Y-up); flip to match QR matrix row order (Y-down)
+        ctx.translateBy(x: 0, y: CGFloat(total))
+        ctx.scaleBy(x: 1, y: -1)
+
         if let bg {
             ctx.setFillColor(cgColor(bg))
             ctx.fill(CGRect(x: 0, y: 0, width: total, height: total))

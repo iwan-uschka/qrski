@@ -33,6 +33,9 @@ public enum ErrorCorrectionLevel: Int, CaseIterable, Identifiable {
 public enum QRCodeGenerator {
     public static func generate(text: String, version: Int, maskPattern: Int, ecl: QRecLevel) -> QRCodeResult? {
         guard !text.isEmpty else { return nil }
+        // -1 = auto; 0-7 = specific pattern. -2 is an undocumented C-level debug path that
+        // returns a non-nil but unmasked (unscannable) code, bypassing the nil guard below.
+        guard maskPattern >= -1 && maskPattern <= 7 else { return nil }
         guard let input = QRinput_new2(Int32(version), ecl) else { return nil }
         defer { QRinput_free(input) }
 

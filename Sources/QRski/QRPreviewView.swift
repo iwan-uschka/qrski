@@ -7,7 +7,7 @@ struct QRPreviewView: View {
     @State private var zoomScale: Double = 1.0
     @State private var gestureStartScale: Double = 1.0
 
-    private let quietZone = 4
+    private let quietZone = ExportCore.quietZone
 
     var body: some View {
         GeometryReader { geo in

@@ -110,7 +110,7 @@ struct ControlsView: View {
                 in: 1...32, step: 1
             )
             if let matrix = appState.matrix {
-                let px = (matrix.width + 8) * appState.moduleSize
+                let px = (matrix.width + 2 * ExportCore.quietZone) * appState.moduleSize
                 Text("Output: \(px)×\(px) px")
                     .font(.caption)
                     .foregroundStyle(.secondary)

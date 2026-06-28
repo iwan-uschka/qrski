@@ -95,12 +95,10 @@ final class QRCodeGeneratorTests: XCTestCase {
         }
     }
 
-    func testHigherECLUsesLargerOrEqualVersion() {
-        let low = QRCodeGenerator.generate(text: "Hello World", version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.L.cValue)
-        let high = QRCodeGenerator.generate(text: "Hello World", version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.H.cValue)
-        if let lv = low?.version, let hv = high?.version {
-            XCTAssertLessThanOrEqual(lv, hv)
-        }
+    func testHigherECLUsesLargerOrEqualVersion() throws {
+        let low = try XCTUnwrap(QRCodeGenerator.generate(text: "Hello World", version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.L.cValue))
+        let high = try XCTUnwrap(QRCodeGenerator.generate(text: "Hello World", version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.H.cValue))
+        XCTAssertLessThanOrEqual(low.version, high.version)
     }
 }
 
