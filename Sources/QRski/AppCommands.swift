@@ -31,6 +31,13 @@ struct AppCommands: Commands {
             .disabled(appState?.matrix == nil)
         }
 
+        CommandGroup(before: .appTermination) {
+            Button("Check for Updates…") {
+                UpdateChecker.shared.check(silent: false)
+            }
+            Divider()
+        }
+
         CommandGroup(after: .pasteboard) {
             Button("Copy SVG") {
                 guard let s = appState, let matrix = s.matrix else { return }

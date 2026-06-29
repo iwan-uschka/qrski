@@ -9,6 +9,7 @@ struct QRskiApp: App {
             ContentView()
                 .environment(appState)
                 .frame(minWidth: 700, minHeight: 450)
+                .task { UpdateChecker.shared.check(silent: true) }
         }
         .windowResizability(.contentMinSize)
         .commands {
