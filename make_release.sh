@@ -2,23 +2,37 @@
 set -e
 cd "$(dirname "$0")"
 
-# Usage: bash make_release.sh [version]
-# If version is omitted, reads it from the latest [x.y.z] entry in CHANGELOG.md
+# Usage: bash make_release.sh <version>
+# Example: bash make_release.sh 1.2.0
+#
+# Renames [Unreleased] in CHANGELOG.md to [version] - today, builds the app,
+# zips it, and prints the gh release create command to run.
 
-VERSION="${1:-}"
-
-if [ -z "$VERSION" ]; then
-  VERSION=$(grep -oE '\[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '[]')
-  if [ -z "$VERSION" ]; then
-    echo "error: could not detect version from CHANGELOG.md — pass it explicitly: bash make_release.sh 1.0.0"
-    exit 1
-  fi
+if [ -z "${1:-}" ]; then
+  echo "error: version required — usage: bash make_release.sh 1.2.0"
+  exit 1
 fi
 
+VERSION="$1"
 TAG="v${VERSION}"
 ZIPFILE="QRski-${TAG}.zip"
+TODAY=$(date +%Y-%m-%d)
 
 echo "→ Version: ${VERSION} (tag: ${TAG})"
+
+# Verify [Unreleased] section has content
+UNRELEASED=$(awk '/^\#\# \[Unreleased\]/{found=1; next} found && /^\#\# \[/{exit} found && NF{print}' CHANGELOG.md)
+if [ -z "$UNRELEASED" ]; then
+  echo "error: [Unreleased] section in CHANGELOG.md is empty — add entries before releasing"
+  exit 1
+fi
+
+# Rename [Unreleased] → [VERSION] - DATE
+sed -i '' "s/^## \[Unreleased\]/## [${VERSION}] - ${TODAY}/" CHANGELOG.md
+# Restore empty [Unreleased] section at the top for future entries
+sed -i '' "s/^## \[${VERSION}\] - ${TODAY}/## [Unreleased]\n\n## [${VERSION}] - ${TODAY}/" CHANGELOG.md
+
+echo "→ CHANGELOG.md updated"
 
 # Build app bundle
 bash make_app.sh
@@ -37,7 +51,11 @@ echo "✓ ${ZIPFILE} is ready ($(du -sh "${ZIPFILE}" | cut -f1))"
 echo ""
 echo "Next steps:"
 echo ""
-echo "  1. Commit & push any pending changes, then run:"
+echo "  1. Commit and push the changelog update:"
+echo ""
+echo "     git add CHANGELOG.md && git commit -m 'Release ${VERSION}' && git push"
+echo ""
+echo "  2. Create the GitHub release:"
 echo ""
 echo "     gh release create ${TAG} ${ZIPFILE} \\"
 echo "       --title \"QRski ${VERSION}\" \\"
