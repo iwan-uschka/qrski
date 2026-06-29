@@ -2,12 +2,12 @@ import SwiftUI
 import QRskiCore
 
 struct QRPreviewView: View {
-    var appState: AppState
+    @Bindable var appState: AppState
 
     @State private var zoomScale: Double = 1.0
     @State private var gestureStartScale: Double = 1.0
 
-    private let quietZone = ExportCore.quietZone
+    private var quietZone: Int { appState.quietZone }
 
     var body: some View {
         GeometryReader { geo in
@@ -27,17 +27,26 @@ struct QRPreviewView: View {
             let modulePx = baseModulePx(matrix: matrix, viewSize: geo.size) * zoomScale
             let canvasSize = Double(matrix.width + 2 * quietZone) * modulePx
 
-            ScrollView([.horizontal, .vertical]) {
-                Canvas { ctx, _ in
-                    drawQR(ctx: ctx, matrix: matrix, modulePx: modulePx)
-                }
-                .frame(width: canvasSize, height: canvasSize)
+            Canvas { ctx, _ in
+                drawQR(ctx: ctx, matrix: matrix, modulePx: modulePx)
             }
+            .frame(width: canvasSize, height: canvasSize)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                if appState.matchViewportBackground {
+                    if appState.isTransparentBg {
+                        Canvas { ctx, size in
+                            drawCheckerboard(ctx: ctx, size: max(size.width, size.height))
+                        }
+                    } else {
+                        appState.bgColor
+                    }
+                }
+            }
             .gesture(
                 MagnificationGesture()
                     .onChanged { delta in
-                        zoomScale = (gestureStartScale * delta).clamped(to: 0.2...20.0)
+                        zoomScale = (gestureStartScale * delta).clamped(to: 0.2...1.0)
                     }
                     .onEnded { _ in
                         gestureStartScale = zoomScale
@@ -50,10 +59,34 @@ struct QRPreviewView: View {
     }
 
     private var zoomBar: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                matchBackgroundToggle
+                Divider().frame(height: 16)
+                zoomControls
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+
+            VStack(spacing: 4) {
+                HStack(spacing: 8) { zoomControls }
+                HStack(spacing: 8) { matchBackgroundToggle; Spacer() }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+        }
+    }
+
+    private var matchBackgroundToggle: some View {
+        Toggle("Match Background", isOn: $appState.matchViewportBackground)
+            .toggleStyle(.checkbox)
+    }
+
+    private var zoomControls: some View {
         HStack(spacing: 8) {
             Image(systemName: "minus.magnifyingglass")
                 .foregroundStyle(.secondary)
-            Slider(value: $zoomScale, in: 0.2...20.0)
+            Slider(value: $zoomScale, in: 0.2...1.0)
                 .onChange(of: zoomScale) { _, newVal in gestureStartScale = newVal }
             Image(systemName: "plus.magnifyingglass")
                 .foregroundStyle(.secondary)
@@ -65,8 +98,6 @@ struct QRPreviewView: View {
             .foregroundStyle(.secondary)
             .padding(.leading, 4)
         }
-        .padding(.horizontal)
-        .padding(.vertical, 6)
     }
 
     private var placeholderView: some View {

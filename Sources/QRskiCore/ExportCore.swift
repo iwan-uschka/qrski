@@ -2,9 +2,9 @@ import SwiftUI
 import AppKit
 
 public enum ExportCore {
-    public static let quietZone = 4
+    public static let defaultQuietZone = 4
 
-    public static func generateSVG(matrix: QRMatrix, fg: Color, bg: Color?) -> String {
+    public static func generateSVG(matrix: QRMatrix, fg: Color, bg: Color?, quietZone: Int = defaultQuietZone) -> String {
         let total = matrix.width + 2 * quietZone
         let fgHex = hexString(fg)
 
@@ -27,7 +27,7 @@ public enum ExportCore {
         return svg
     }
 
-    public static func generatePNG(matrix: QRMatrix, moduleSize: Int, fg: Color, bg: Color?) -> Data? {
+    public static func generatePNG(matrix: QRMatrix, moduleSize: Int, fg: Color, bg: Color?, quietZone: Int = defaultQuietZone) -> Data? {
         let total = (matrix.width + 2 * quietZone) * moduleSize
         let cs = CGColorSpaceCreateDeviceRGB()
         guard let ctx = CGContext(

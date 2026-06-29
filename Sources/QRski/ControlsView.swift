@@ -7,7 +7,7 @@ struct ControlsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                contentSection
+                PayloadBlocksView(appState: appState)
                 Divider()
                 qrParametersSection
                 Divider()
@@ -22,20 +22,6 @@ struct ControlsView: View {
     }
 
     // MARK: - Sections
-
-    private var contentSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("Content", systemImage: "text.cursor")
-                .font(.headline)
-            TextEditor(text: $appState.inputText)
-                .frame(minHeight: 80, maxHeight: 140)
-                .font(.system(.body, design: .monospaced))
-                .scrollContentBackground(.hidden)
-                .padding(4)
-                .background(Color(NSColor.textBackgroundColor))
-                .border(Color.secondary.opacity(0.3), width: 1)
-        }
-    }
 
     private var qrParametersSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -61,6 +47,16 @@ struct ControlsView: View {
             Picker("Mask Pattern", selection: $appState.maskPattern) {
                 Text("Auto").tag(-1)
                 ForEach(0..<8) { i in Text("\(i)").tag(i) }
+            }
+
+            HStack {
+                Text("Quiet Zone")
+                Spacer()
+                Text("\(appState.quietZone) modules")
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                Stepper("", value: $appState.quietZone, in: 0...8)
+                    .labelsHidden()
             }
 
             if let v = appState.actualVersion {
@@ -110,7 +106,7 @@ struct ControlsView: View {
                 in: 1...32, step: 1
             )
             if let matrix = appState.matrix {
-                let px = (matrix.width + 2 * ExportCore.quietZone) * appState.moduleSize
+                let px = (matrix.width + 2 * appState.quietZone) * appState.moduleSize
                 Text("Output: \(px)×\(px) px")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -124,7 +120,8 @@ struct ControlsView: View {
                 guard let matrix = appState.matrix else { return }
                 ExportManager.exportPNG(
                     matrix: matrix, moduleSize: appState.moduleSize,
-                    fg: appState.fgColor, bg: appState.effectiveBgColor
+                    fg: appState.fgColor, bg: appState.effectiveBgColor,
+                    quietZone: appState.quietZone
                 )
             }
             .disabled(appState.matrix == nil)
@@ -133,7 +130,7 @@ struct ControlsView: View {
 
             Button("Export SVG…") {
                 guard let matrix = appState.matrix else { return }
-                ExportManager.exportSVG(matrix: matrix, fg: appState.fgColor, bg: appState.effectiveBgColor)
+                ExportManager.exportSVG(matrix: matrix, fg: appState.fgColor, bg: appState.effectiveBgColor, quietZone: appState.quietZone)
             }
             .disabled(appState.matrix == nil)
             .frame(maxWidth: .infinity)
@@ -141,7 +138,7 @@ struct ControlsView: View {
 
             Button("Copy SVG") {
                 guard let matrix = appState.matrix else { return }
-                ExportManager.copySVGToClipboard(matrix: matrix, fg: appState.fgColor, bg: appState.effectiveBgColor)
+                ExportManager.copySVGToClipboard(matrix: matrix, fg: appState.fgColor, bg: appState.effectiveBgColor, quietZone: appState.quietZone)
             }
             .disabled(appState.matrix == nil)
             .frame(maxWidth: .infinity)

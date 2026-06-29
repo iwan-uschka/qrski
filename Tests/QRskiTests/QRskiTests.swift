@@ -105,7 +105,7 @@ final class QRCodeGeneratorTests: XCTestCase {
 // MARK: - SVG export
 
 final class SVGExportTests: XCTestCase {
-    private let qz = ExportCore.quietZone
+    private let qz = ExportCore.defaultQuietZone
 
     private func blankMatrix(width: Int) -> QRMatrix {
         QRMatrix(width: width, modules: Array(repeating: Array(repeating: false, count: width), count: width))
@@ -296,5 +296,87 @@ final class VersionComparisonTests: XCTestCase {
 
     func testZeroVersions() {
         XCTAssertFalse(isVersionNewer("0.0.0", than: "0.0.0"))
+    }
+}
+
+// MARK: - QuietZone in exports
+
+final class QuietZoneTests: XCTestCase {
+    private let matrix: QRMatrix = {
+        let r = QRCodeGenerator.generate(text: "test", version: 1, maskPattern: -1, ecl: .M)!
+        return r.matrix
+    }()
+
+    func testPNGSizeWithDefaultQuietZone() throws {
+        let data = try XCTUnwrap(ExportCore.generatePNG(matrix: matrix, moduleSize: 1, fg: .black, bg: .white))
+        let rep = try XCTUnwrap(NSBitmapImageRep(data: data))
+        let expected = matrix.width + 2 * ExportCore.defaultQuietZone
+        XCTAssertEqual(rep.pixelsWide, expected)
+        XCTAssertEqual(rep.pixelsHigh, expected)
+    }
+
+    func testPNGSizeWithZeroQuietZone() throws {
+        let data = try XCTUnwrap(ExportCore.generatePNG(matrix: matrix, moduleSize: 1, fg: .black, bg: .white, quietZone: 0))
+        let rep = try XCTUnwrap(NSBitmapImageRep(data: data))
+        XCTAssertEqual(rep.pixelsWide, matrix.width)
+        XCTAssertEqual(rep.pixelsHigh, matrix.width)
+    }
+
+    func testPNGSizeWithCustomQuietZone() throws {
+        let qz = 8
+        let data = try XCTUnwrap(ExportCore.generatePNG(matrix: matrix, moduleSize: 2, fg: .black, bg: .white, quietZone: qz))
+        let rep = try XCTUnwrap(NSBitmapImageRep(data: data))
+        let expected = (matrix.width + 2 * qz) * 2
+        XCTAssertEqual(rep.pixelsWide, expected)
+        XCTAssertEqual(rep.pixelsHigh, expected)
+    }
+
+    func testSVGViewBoxWithDefaultQuietZone() {
+        let svg = ExportCore.generateSVG(matrix: matrix, fg: .black, bg: .white)
+        let expected = matrix.width + 2 * ExportCore.defaultQuietZone
+        XCTAssertTrue(svg.contains("viewBox=\"0 0 \(expected) \(expected)\""))
+    }
+
+    func testSVGViewBoxWithZeroQuietZone() {
+        let svg = ExportCore.generateSVG(matrix: matrix, fg: .black, bg: .white, quietZone: 0)
+        XCTAssertTrue(svg.contains("viewBox=\"0 0 \(matrix.width) \(matrix.width)\""))
+    }
+
+    func testSVGViewBoxWithCustomQuietZone() {
+        let qz = 6
+        let svg = ExportCore.generateSVG(matrix: matrix, fg: .black, bg: .white, quietZone: qz)
+        let expected = matrix.width + 2 * qz
+        XCTAssertTrue(svg.contains("viewBox=\"0 0 \(expected) \(expected)\""))
+    }
+}
+
+// MARK: - PayloadBlock Codable
+
+final class PayloadBlockCodableTests: XCTestCase {
+    func testRoundTrip() throws {
+        let blocks = [
+            PayloadBlock(label: "base", text: "https://example.com/"),
+            PayloadBlock(label: "", text: "path?q=1"),
+        ]
+        let data = try JSONEncoder().encode(blocks)
+        let decoded = try JSONDecoder().decode([PayloadBlock].self, from: data)
+        XCTAssertEqual(decoded.count, 2)
+        XCTAssertEqual(decoded[0].label, "base")
+        XCTAssertEqual(decoded[0].text, "https://example.com/")
+        XCTAssertEqual(decoded[1].label, "")
+        XCTAssertEqual(decoded[1].text, "path?q=1")
+    }
+
+    func testIDPreservedInRoundTrip() throws {
+        let block = PayloadBlock(label: "x", text: "y")
+        let data = try JSONEncoder().encode(block)
+        let decoded = try JSONDecoder().decode(PayloadBlock.self, from: data)
+        XCTAssertEqual(decoded.id, block.id)
+    }
+
+    func testEmptyArrayRoundTrip() throws {
+        let data = try JSONEncoder().encode([PayloadBlock]())
+        let decoded = try JSONDecoder().decode([PayloadBlock].self, from: data)
+        XCTAssertTrue(decoded.isEmpty)
     }
 }

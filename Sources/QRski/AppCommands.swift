@@ -19,14 +19,14 @@ struct AppCommands: Commands {
             Button("Export PNG…") {
                 guard let s = appState, let matrix = s.matrix else { return }
                 ExportManager.exportPNG(matrix: matrix, moduleSize: s.moduleSize,
-                                        fg: s.fgColor, bg: s.effectiveBgColor)
+                                        fg: s.fgColor, bg: s.effectiveBgColor, quietZone: s.quietZone)
             }
             .keyboardShortcut("e", modifiers: [.command, .shift])
             .disabled(appState?.matrix == nil)
 
             Button("Export SVG…") {
                 guard let s = appState, let matrix = s.matrix else { return }
-                ExportManager.exportSVG(matrix: matrix, fg: s.fgColor, bg: s.effectiveBgColor)
+                ExportManager.exportSVG(matrix: matrix, fg: s.fgColor, bg: s.effectiveBgColor, quietZone: s.quietZone)
             }
             .disabled(appState?.matrix == nil)
         }
@@ -41,7 +41,7 @@ struct AppCommands: Commands {
         CommandGroup(after: .pasteboard) {
             Button("Copy SVG") {
                 guard let s = appState, let matrix = s.matrix else { return }
-                ExportManager.copySVGToClipboard(matrix: matrix, fg: s.fgColor, bg: s.effectiveBgColor)
+                ExportManager.copySVGToClipboard(matrix: matrix, fg: s.fgColor, bg: s.effectiveBgColor, quietZone: s.quietZone)
             }
             .keyboardShortcut("k", modifiers: .command)
             .disabled(appState?.matrix == nil)

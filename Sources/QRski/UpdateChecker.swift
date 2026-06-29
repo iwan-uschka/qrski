@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import OSLog
 import QRskiCore
 
 @MainActor
@@ -11,6 +12,11 @@ final class UpdateChecker {
     private init() {}
 
     func check(silent: Bool) {
+        guard let local = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
+            Logger.update.debug("skipping update check: no bundle version (development build)")
+            return
+        }
+        Logger.update.info("checking for updates (silent=\(silent))")
         Task {
             do {
                 let (data, _) = try await URLSession.shared.data(from: apiURL)
@@ -18,31 +24,33 @@ final class UpdateChecker {
                     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                     let tag = json["tag_name"] as? String,
                     let releaseURL = json["html_url"] as? String
-                else { return }
+                else {
+                    Logger.update.error("unexpected API response format")
+                    return
+                }
 
                 let remote = tag.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
-                let local = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
 
                 if isVersionNewer(remote, than: local) {
-                    presentUpdateAvailable(version: remote, url: releaseURL)
-                } else if !silent {
-                    presentUpToDate(version: local)
+                    Logger.update.info("update available: local=\(local) remote=\(remote)")
+                    presentUpdateAvailable(version: remote, localVersion: local, url: releaseURL)
+                } else {
+                    Logger.update.info("up to date: local=\(local) remote=\(remote)")
+                    if !silent { presentUpToDate(version: local) }
                 }
             } catch {
-                if !silent {
-                    presentError(error)
-                }
+                Logger.update.error("update check failed: \(error)")
+                if !silent { presentError(error) }
             }
         }
     }
 
     // MARK: - Alerts
 
-    private func presentUpdateAvailable(version: String, url: String) {
-        let local = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    private func presentUpdateAvailable(version: String, localVersion: String, url: String) {
         let alert = NSAlert()
         alert.messageText = "Update Available"
-        alert.informativeText = "QRski \(version) is available. You have \(local)."
+        alert.informativeText = "QRski \(version) is available. You have \(localVersion)."
         alert.addButton(withTitle: "Download")
         alert.addButton(withTitle: "Later")
         if alert.runModal() == .alertFirstButtonReturn, let releaseURL = URL(string: url) {
