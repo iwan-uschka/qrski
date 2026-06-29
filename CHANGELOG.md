@@ -2,8 +2,32 @@
 
 ## [1.1.1] - 2026-06-29
 
+### Added
+- Export consolidated into a single overlay menu button (↓ icon) on the preview panel — replaces three separate export buttons; menu has Export (PNG, SVG) and Copy (SVG) sections
+- PNG save dialog now includes a live module size slider with output dimensions label; chosen size is applied after the dialog closes
+- Tab / Shift+Tab advances and retreats focus in payload text fields (custom `NSTextView` wrapper)
+- README: screenshot and Download section linking to the Releases page
+
+### Fixed
+- Silent PNG export failure now surfaces an `NSAlert` instead of returning silently
+- Module size chosen in the PNG dialog is written back to `AppState` via callback and persists across exports
+- `NSSlider` in PNG export dialog snaps to integer positions (tick marks)
+- Checkerboard preview now correctly scoped to the viewport background toggle state
+
 ### Changed
-- README: added screenshot and a Download section linking to the Releases page
+- Export PNG/SVG and Copy SVG removed from the File/Edit menu bar — export is exclusively via the overlay button
+- Quiet zone stepper replaced with a slider in the controls panel
+- `QRMatrix.height` is now a computed property
+- `NSApp.activate()` call updated for deprecation
+- `VersionComparison` strips only the leading `v` prefix, not arbitrary non-numeric characters
+- Accessibility labels added to payload block buttons and export menu items
+- `ExportManager` SVG generation deferred; encoding failures guarded explicitly
+- `import Foundation` removed from files that don't require it
+
+### Internal
+- C library (`libqrencode`): null/overflow guards and bounds checks on mode and version parameters; errno propagation on allocation failure; `#undef` guards before macro redefinitions; unused include removal; doc comment typo fixes
+- `QuietZoneTests` setup migrated to `setUpWithError`
+- Build scripts: `CFBundleVersion` now uses `VERSION`; `actool` plist merge fixed; `trap` cleanup added; zip guarded against missing app bundle; scripts `cd` to their own directory on startup
 
 ## [1.1.0] - 2026-06-29
 
