@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+VERSION=$(grep -oE '\[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '[]')
+if [ -z "$VERSION" ]; then
+  echo "error: could not detect version from CHANGELOG.md"
+  exit 1
+fi
+echo "→ Version: ${VERSION}"
+
 echo "→ Building release binary..."
 swift build -c release
 
@@ -25,7 +32,7 @@ xcrun actool \
   --compile QRski.app/Contents/Resources \
   Sources/QRski/Assets.xcassets
 
-cat > QRski.app/Contents/Info.plist << 'EOF'
+cat > QRski.app/Contents/Info.plist << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -34,7 +41,7 @@ cat > QRski.app/Contents/Info.plist << 'EOF'
   <key>CFBundleName</key><string>QRski</string>
   <key>CFBundleDisplayName</key><string>QRski</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleShortVersionString</key><string>${VERSION}</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>CFBundleIconName</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>

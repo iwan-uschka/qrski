@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.1] - 2026-06-29
+
+### Added
+- Automatic update check on launch: shows an alert when a newer GitHub release is available
+- "Check for Updates…" item in the application menu for manual checks
+- `make_release.sh`: builds the app, zips it as `QRski-vX.Y.Z.zip`, and prints the `gh release create` command with release notes extracted from this changelog
+
+### Fixed
+- Test suite was passing `.cValue` (`QRecLevel`) to `QRCodeGenerator.generate`, which now accepts `ErrorCorrectionLevel` directly
+
 ## [1.0.0] - 2026-06-28
 
 ### Fixed
