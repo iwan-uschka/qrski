@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-06-29
+
+### Changed
+- README: added screenshot and a Download section linking to the Releases page
+
 ## [1.1.0] - 2026-06-29
 
 ### Added
@@ -17,7 +22,6 @@
 - Concatenated result field expanded unexpectedly on click with no way to collapse
 
 ### Changed
-- README: added screenshot and a Download section linking to the Releases page
 - Bundle identifier changed from `de.bitgrip.qrski` to `com.creativytool.qrski`
 - `make_app.sh` now reads the version from `CHANGELOG.md` automatically — no manual bump needed
 - Zoom capped at fit-to-viewport (1×); scroll beyond viewport removed
