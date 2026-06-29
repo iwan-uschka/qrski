@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- `make_release.sh` no longer duplicates `[Unreleased]` and version headers when a same-date release already exists in the changelog — replaced two `sed` substitutions with a single `awk` script that only matches the first occurrence
+
 ## [1.1.1] - 2026-06-29
 
 ### Added
