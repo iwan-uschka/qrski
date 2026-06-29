@@ -6,7 +6,7 @@ import QRskiCore
 
 enum ExportManager {
     @MainActor
-    static func exportPNG(matrix: QRMatrix, moduleSize: Int, fg: Color, bg: Color?, quietZone: Int) {
+    static func exportPNG(matrix: QRMatrix, moduleSize: Int, fg: Color, bg: Color?, quietZone: Int, onModuleSizeUsed: ((Int) -> Void)? = nil) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png]
         panel.nameFieldStringValue = "qrcode.png"
@@ -16,10 +16,18 @@ enum ExportManager {
             Logger.export.debug("PNG export cancelled")
             return
         }
-        guard let data = ExportCore.generatePNG(matrix: matrix, moduleSize: accessory.moduleSize, fg: fg, bg: bg, quietZone: quietZone) else { return }
+        guard let data = ExportCore.generatePNG(matrix: matrix, moduleSize: accessory.moduleSize, fg: fg, bg: bg, quietZone: quietZone) else {
+            Logger.export.error("PNG generation failed (CGContext or bitmap allocation)")
+            let alert = NSAlert()
+            alert.messageText = "Export Failed"
+            alert.informativeText = "Could not generate the PNG image. Try a smaller module size."
+            alert.runModal()
+            return
+        }
         do {
             try data.write(to: url)
             Logger.export.info("PNG exported: path=\(url.path) moduleSize=\(accessory.moduleSize) bytes=\(data.count)")
+            onModuleSizeUsed?(accessory.moduleSize)
         } catch {
             Logger.export.error("PNG export failed: \(error)")
             NSAlert(error: error).runModal()
@@ -71,14 +79,12 @@ private final class PNGExportAccessory: NSObject {
     private let slider: NSSlider
     private let moduleSizeValueLabel: NSTextField
     private let outputSizeLabel: NSTextField
-    private let matrix: QRMatrix
-    private let quietZone: Int
+    private let totalModules: Int
 
-    var moduleSize: Int { max(1, Int(slider.doubleValue.rounded())) }
+    var moduleSize: Int { Int(slider.doubleValue.rounded()) }
 
     init(matrix: QRMatrix, initialModuleSize: Int, quietZone: Int) {
-        self.matrix = matrix
-        self.quietZone = quietZone
+        totalModules = matrix.width + 2 * quietZone
 
         slider = NSSlider()
         moduleSizeValueLabel = NSTextField(labelWithString: "")
@@ -91,6 +97,8 @@ private final class PNGExportAccessory: NSObject {
 
         slider.minValue = 1
         slider.maxValue = 32
+        slider.numberOfTickMarks = 32
+        slider.allowsTickMarkValuesOnly = true
         slider.doubleValue = Double(initialModuleSize)
         slider.isContinuous = true
         slider.target = self
@@ -131,7 +139,6 @@ private final class PNGExportAccessory: NSObject {
     private func update() {
         let ms = moduleSize
         moduleSizeValueLabel.stringValue = "\(ms) px"
-        let px = (matrix.width + 2 * quietZone) * ms
-        outputSizeLabel.stringValue = "Output: \(px) × \(px) px"
+        outputSizeLabel.stringValue = "Output: \(totalModules * ms) × \(totalModules * ms) px"
     }
 }

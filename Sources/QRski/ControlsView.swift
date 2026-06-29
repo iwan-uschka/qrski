@@ -69,6 +69,7 @@ struct ControlsView: View {
                 ),
                 in: 0...8, step: 1
             )
+            .accessibilityLabel("Quiet Zone")
 
             if let v = appState.actualVersion {
                 Text("Encoded at version \(v) (\((v * 4 + 21))×\((v * 4 + 21)) modules)")
@@ -93,6 +94,7 @@ struct ControlsView: View {
                 Spacer()
                 ColorPicker("", selection: $appState.fgColor, supportsOpacity: false)
                     .labelsHidden()
+                    .accessibilityLabel("Foreground")
             }
 
             HStack {
@@ -101,6 +103,7 @@ struct ControlsView: View {
                 Toggle("", isOn: $appState.isTransparentBg)
                     .labelsHidden()
                     .toggleStyle(.checkbox)
+                    .accessibilityLabel("Transparent Background")
             }
 
             if !appState.isTransparentBg {
@@ -109,6 +112,7 @@ struct ControlsView: View {
                     Spacer()
                     ColorPicker("", selection: $appState.bgColor, supportsOpacity: false)
                         .labelsHidden()
+                        .accessibilityLabel("Background")
                 }
             }
         }

@@ -130,7 +130,8 @@ struct QRPreviewView: View {
                     ExportManager.exportPNG(
                         matrix: matrix, moduleSize: appState.moduleSize,
                         fg: appState.fgColor, bg: appState.effectiveBgColor,
-                        quietZone: appState.quietZone
+                        quietZone: appState.quietZone,
+                        onModuleSizeUsed: { appState.moduleSize = $0 }
                     )
                 }
                 Button("SVG") {
@@ -155,7 +156,7 @@ struct QRPreviewView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.white)
                 .padding(8)
-                .background(appState.matrix == nil ? Color.secondary : Color.accentColor)
+                .background(Color.accentColor)
                 .clipShape(.circle)
         }
         .menuStyle(.button)

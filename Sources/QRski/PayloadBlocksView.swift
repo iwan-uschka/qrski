@@ -99,7 +99,7 @@ private struct BlockRowView: View {
     let moveUp: () -> Void
     let moveDown: () -> Void
 
-    @FocusState private var textFocused: Bool
+    @State private var textFocused = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -141,13 +141,9 @@ private struct BlockRowView: View {
                 .font(.caption)
             }
 
-            TextEditor(text: $block.text)
+            TabSensitiveTextEditor(text: $block.text, isFocused: $textFocused)
                 .frame(minHeight: 50, maxHeight: 100)
-                .font(.system(.body, design: .monospaced))
-                .scrollContentBackground(.hidden)
-                .padding(4)
                 .background(Color(NSColor.textBackgroundColor))
-                .focused($textFocused)
                 .overlay(
                     RoundedRectangle(cornerRadius: 2)
                         .stroke(
@@ -158,4 +154,60 @@ private struct BlockRowView: View {
         }
         .padding(.vertical, 2)
     }
+}
+
+// MARK: - Tab-intercepting text editor
+
+private struct TabSensitiveTextEditor: NSViewRepresentable {
+    @Binding var text: String
+    @Binding var isFocused: Bool
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let textView = TabInterceptingTextView()
+        textView.delegate = context.coordinator
+        textView.isRichText = false
+        textView.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        textView.drawsBackground = false
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainerInset = NSSize(width: 4, height: 4)
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+
+        let scrollView = NSScrollView()
+        scrollView.documentView = textView
+        scrollView.drawsBackground = false
+        scrollView.borderType = .noBorder
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        if textView.string != text { textView.string = text }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: TabSensitiveTextEditor
+        init(_ parent: TabSensitiveTextEditor) { self.parent = parent }
+
+        func textDidChange(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            parent.text = tv.string
+        }
+        func textDidBeginEditing(_ notification: Notification) { parent.isFocused = true }
+        func textDidEndEditing(_ notification: Notification) { parent.isFocused = false }
+    }
+}
+
+private final class TabInterceptingTextView: NSTextView {
+    override func insertTab(_ sender: Any?) { window?.selectNextKeyView(self) }
+    override func insertBacktab(_ sender: Any?) { window?.selectPreviousKeyView(self) }
 }
