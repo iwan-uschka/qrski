@@ -2,6 +2,14 @@
 
 macOS native QR code generator. Built with Swift + SwiftUI, no external dependencies.
 
+![QRski screenshot](https://github.com/user-attachments/assets/aea83f18-af45-4024-90c3-a22ed328a32b)
+
+## Download
+
+Pre-built releases (macOS app bundle, zipped) are available on the [Releases page](https://github.com/iwan-uschka/qrski/releases).
+
+> **Note:** the app is unsigned — right-click → Open on first launch to bypass Gatekeeper.
+
 ## Features
 
 - **Payload block system**: compose the QR payload from multiple text blocks with optional labels — edit only the part that changes without touching the rest
@@ -28,8 +36,6 @@ bash make_release.sh
 ```
 
 Builds the app, zips it as `QRski-vX.Y.Z.zip`, and prints the `gh release create` command to run. Release notes are extracted automatically from `CHANGELOG.md`.
-
-> **Note:** the app is unsigned, so users will need to right-click → Open on first launch to bypass Gatekeeper.
 
 ## Dependencies
 
