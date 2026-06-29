@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.0] - 2026-06-29
+
+### Added
+- **Payload block system**: replace the single text input with multiple composable blocks, each with an optional label. Blocks are concatenated live to form the QR payload. Blocks can be added, deleted, and reordered. A copy button shows the assembled result when more than one block is present.
+- **Configurable quiet zone**: stepper in QR Parameters (0–8 modules, default 4) affects both preview rendering and all exports (PNG, SVG).
+- **Match viewport background**: checkbox in the preview toolbar fills the entire preview area with the QR background color (or checkerboard for transparent), avoiding contrast issues in dark mode.
+- Structured `OSLog` logging with four categories: `generation`, `blocks`, `export`, `update`. Stream with: `log stream --predicate 'subsystem == "com.creativytool.qrski"' --level debug`
+
+### Fixed
+- Update check now skipped in development builds (no `CFBundleShortVersionString` in bundle)
+- Update alert showed empty local version string when running without a built app bundle
+- App window not brought to front on launch when run from Xcode
+- Crash when deleting a block due to stale captured index in SwiftUI closure
+- Move/delete button hit areas too small due to missing `contentShape`
+- Concatenated result field expanded unexpectedly on click with no way to collapse
+
+### Changed
+- Bundle identifier changed from `de.bitgrip.qrski` to `com.creativytool.qrski`
+- `make_app.sh` now reads the version from `CHANGELOG.md` automatically — no manual bump needed
+- Zoom capped at fit-to-viewport (1×); scroll beyond viewport removed
+- Preview toolbar zoom controls wrap gracefully when the panel is narrow (`ViewThatFits`)
+
 ## [1.0.1] - 2026-06-29
 
 ### Added

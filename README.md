@@ -4,11 +4,13 @@ macOS native QR code generator. Built with Swift + SwiftUI, no external dependen
 
 ## Features
 
-- QR code generation with full parameter control: version (1–40), mask pattern (auto/0–7), error correction (L/M/Q/H)
-- Real-time preview with zoom slider and pinch-to-zoom
+- **Payload block system**: compose the QR payload from multiple text blocks with optional labels — edit only the part that changes without touching the rest
+- QR code generation with full parameter control: version (1–40), mask pattern (auto/0–7), error correction (L/M/Q/H), quiet zone (0–8 modules)
+- Real-time preview with zoom slider and pinch-to-zoom; optional viewport background matching
 - Foreground/background color pickers; transparent background with checkerboard preview
 - Export to PNG (configurable module size) and SVG
 - Copy SVG to clipboard
+- Automatic update check against GitHub Releases on launch
 - All settings persisted between launches
 
 ## Building a release app
@@ -17,7 +19,17 @@ macOS native QR code generator. Built with Swift + SwiftUI, no external dependen
 bash make_app.sh
 ```
 
-This produces `QRski.app` in the project root — a release binary assembled into a proper macOS app bundle, compiled asset catalog (icon), and ad-hoc signed.
+This produces `QRski.app` in the project root — a release binary assembled into a proper macOS app bundle, compiled asset catalog (icon), and ad-hoc signed. The version is read automatically from the latest `[x.y.z]` entry in `CHANGELOG.md`.
+
+## Publishing a release
+
+```bash
+bash make_release.sh
+```
+
+Builds the app, zips it as `QRski-vX.Y.Z.zip`, and prints the `gh release create` command to run. Release notes are extracted automatically from `CHANGELOG.md`.
+
+> **Note:** the app is unsigned, so users will need to right-click → Open on first launch to bypass Gatekeeper.
 
 ## Dependencies
 
