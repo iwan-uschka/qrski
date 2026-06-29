@@ -11,6 +11,8 @@ struct ControlsView: View {
                 Divider()
                 qrParametersSection
                 Divider()
+                pngSizeSection
+                Divider()
                 colorsSection
             }
             .padding()
@@ -80,6 +82,34 @@ struct ControlsView: View {
                 Text(err)
                     .font(.caption)
                     .foregroundStyle(.red)
+            }
+        }
+    }
+
+    private var pngSizeSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("PNG Export", systemImage: "photo")
+                .font(.headline)
+            HStack {
+                Text("Module size")
+                Spacer()
+                Text("\(appState.moduleSize) px")
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            Slider(
+                value: Binding(
+                    get: { Double(appState.moduleSize) },
+                    set: { appState.moduleSize = Int($0.rounded()) }
+                ),
+                in: 1...32, step: 1
+            )
+            .accessibilityLabel("Module size")
+            if let matrix = appState.matrix {
+                let px = (matrix.width + 2 * appState.quietZone) * appState.moduleSize
+                Text("Output: \(px)×\(px) px")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }

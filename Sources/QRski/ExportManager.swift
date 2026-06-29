@@ -24,10 +24,10 @@ enum ExportManager {
             alert.runModal()
             return
         }
+        onModuleSizeUsed?(accessory.moduleSize)
         do {
             try data.write(to: url)
             Logger.export.info("PNG exported: path=\(url.path) moduleSize=\(accessory.moduleSize) bytes=\(data.count)")
-            onModuleSizeUsed?(accessory.moduleSize)
         } catch {
             Logger.export.error("PNG export failed: \(error)")
             NSAlert(error: error).runModal()
@@ -99,7 +99,7 @@ private final class PNGExportAccessory: NSObject {
         slider.maxValue = 32
         slider.numberOfTickMarks = 32
         slider.allowsTickMarkValuesOnly = true
-        slider.doubleValue = Double(initialModuleSize)
+        slider.doubleValue = Double(min(max(initialModuleSize, 1), 32))
         slider.isContinuous = true
         slider.target = self
         slider.action = #selector(sliderChanged)
@@ -138,7 +138,8 @@ private final class PNGExportAccessory: NSObject {
 
     private func update() {
         let ms = moduleSize
+        let side = totalModules * ms
         moduleSizeValueLabel.stringValue = "\(ms) px"
-        outputSizeLabel.stringValue = "Output: \(totalModules * ms) × \(totalModules * ms) px"
+        outputSizeLabel.stringValue = "Output: \(side) × \(side) px"
     }
 }

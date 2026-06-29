@@ -10,5 +10,6 @@ struct ContentView: View {
             QRPreviewView(appState: appState)
                 .frame(minWidth: 200, minHeight: 300)
         }
+        .focusedValue(\.appState, appState)
     }
 }

@@ -188,8 +188,12 @@ private struct TabSensitiveTextEditor: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        context.coordinator.parent = self
         guard let textView = scrollView.documentView as? NSTextView else { return }
         if textView.string != text { textView.string = text }
+        if isFocused && textView.window?.firstResponder !== textView {
+            textView.window?.makeFirstResponder(textView)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
