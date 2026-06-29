@@ -2,9 +2,6 @@
 
 ## [Unreleased]
 
-### Changed
-- `make_release.sh` now requires an explicit version argument, verifies `[Unreleased]` is non-empty, stamps it with the version and date, and restores a fresh `[Unreleased]` header automatically
-
 ## [1.1.1] - 2026-06-29
 
 ### Added
@@ -20,6 +17,7 @@
 - Checkerboard preview now correctly scoped to the viewport background toggle state
 
 ### Changed
+- `make_release.sh` now requires an explicit version argument, verifies `[Unreleased]` is non-empty, stamps it with the version and date, and restores a fresh `[Unreleased]` header automatically
 - Export PNG/SVG and Copy SVG removed from the File/Edit menu bar — export is exclusively via the overlay button
 - Quiet zone stepper replaced with a slider in the controls panel
 - `QRMatrix.height` is now a computed property

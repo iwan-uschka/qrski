@@ -27,10 +27,17 @@ if [ -z "$UNRELEASED" ]; then
   exit 1
 fi
 
-# Rename [Unreleased] → [VERSION] - DATE
-sed -i '' "s/^## \[Unreleased\]/## [${VERSION}] - ${TODAY}/" CHANGELOG.md
-# Restore empty [Unreleased] section at the top for future entries
-sed -i '' "s/^## \[${VERSION}\] - ${TODAY}/## [Unreleased]\n\n## [${VERSION}] - ${TODAY}/" CHANGELOG.md
+# Stamp [Unreleased] → [VERSION] - DATE and prepend a fresh [Unreleased]
+awk -v ver="${VERSION}" -v date="${TODAY}" '
+  !done && /^## \[Unreleased\]/ {
+    print "## [Unreleased]"
+    print ""
+    print "## [" ver "] - " date
+    done=1
+    next
+  }
+  { print }
+' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 
 echo "→ CHANGELOG.md updated"
 
