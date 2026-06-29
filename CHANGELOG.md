@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- `make_release.sh` now requires an explicit version argument, verifies `[Unreleased]` is non-empty, stamps it with the version and date, and restores a fresh `[Unreleased]` header automatically
+
 ## [1.1.1] - 2026-06-29
 
 ### Added
