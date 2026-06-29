@@ -13,6 +13,9 @@ struct QRPreviewView: View {
         GeometryReader { geo in
             VStack(spacing: 0) {
                 previewArea(geo: geo)
+                    .overlay(alignment: .topTrailing) {
+                        exportMenu.padding(8)
+                    }
                 Divider()
                 zoomBar
             }
@@ -66,14 +69,14 @@ struct QRPreviewView: View {
                 zoomControls
             }
             .padding(.horizontal)
-            .padding(.vertical, 6)
+            .padding(.vertical, 10)
 
             VStack(spacing: 4) {
                 HStack(spacing: 8) { zoomControls }
                 HStack(spacing: 8) { matchBackgroundToggle; Spacer() }
             }
             .padding(.horizontal)
-            .padding(.vertical, 6)
+            .padding(.vertical, 10)
         }
     }
 
@@ -115,6 +118,49 @@ struct QRPreviewView: View {
                     .font(.subheadline)
             }
         }
+    }
+
+    // MARK: - Export menu
+
+    private var exportMenu: some View {
+        Menu {
+            Section("Export") {
+                Button("PNG") {
+                    guard let matrix = appState.matrix else { return }
+                    ExportManager.exportPNG(
+                        matrix: matrix, moduleSize: appState.moduleSize,
+                        fg: appState.fgColor, bg: appState.effectiveBgColor,
+                        quietZone: appState.quietZone
+                    )
+                }
+                Button("SVG") {
+                    guard let matrix = appState.matrix else { return }
+                    ExportManager.exportSVG(
+                        matrix: matrix, fg: appState.fgColor,
+                        bg: appState.effectiveBgColor, quietZone: appState.quietZone
+                    )
+                }
+            }
+            Section("Copy") {
+                Button("SVG") {
+                    guard let matrix = appState.matrix else { return }
+                    ExportManager.copySVGToClipboard(
+                        matrix: matrix, fg: appState.fgColor,
+                        bg: appState.effectiveBgColor, quietZone: appState.quietZone
+                    )
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.down.to.line")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.white)
+                .padding(8)
+                .background(appState.matrix == nil ? Color.secondary : Color.accentColor)
+                .clipShape(.circle)
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .disabled(appState.matrix == nil)
     }
 
     // MARK: - Drawing
