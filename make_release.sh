@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+cd "$(dirname "$0")"
 
 # Usage: bash make_release.sh [version]
 # If version is omitted, reads it from the latest [x.y.z] entry in CHANGELOG.md
@@ -22,6 +23,11 @@ echo "→ Version: ${VERSION} (tag: ${TAG})"
 # Build app bundle
 bash make_app.sh
 
+if [ ! -d QRski.app ]; then
+  echo "error: QRski.app not found — did make_app.sh fail?"
+  exit 1
+fi
+
 echo "→ Zipping QRski.app → ${ZIPFILE}..."
 rm -f "${ZIPFILE}"
 zip -r --symlinks "${ZIPFILE}" QRski.app
@@ -35,6 +41,6 @@ echo "  1. Commit & push any pending changes, then run:"
 echo ""
 echo "     gh release create ${TAG} ${ZIPFILE} \\"
 echo "       --title \"QRski ${VERSION}\" \\"
-echo "       --notes-file <(awk '/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}' CHANGELOG.md)"
+echo "       --notes-file <(awk \"/^\#\# \[${VERSION}\]/{found=1; next} found && /^\#\# \[/{exit} found{print}\" CHANGELOG.md)"
 echo ""
 echo "  Users on macOS will need to right-click → Open the first time (Gatekeeper, unsigned app)."

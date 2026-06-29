@@ -26,7 +26,7 @@ private class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         NSApp.windows.first?.makeKeyAndOrderFront(nil)
     }
 }

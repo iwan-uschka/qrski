@@ -36,7 +36,6 @@ enum ExportManager {
 
     @MainActor
     static func exportSVG(matrix: QRMatrix, fg: Color, bg: Color?, quietZone: Int) {
-        let svg = ExportCore.generateSVG(matrix: matrix, fg: fg, bg: bg, quietZone: quietZone)
         let panel = NSSavePanel()
         if let svgType = UTType(filenameExtension: "svg") {
             panel.allowedContentTypes = [svgType]
@@ -46,14 +45,21 @@ enum ExportManager {
             Logger.export.debug("SVG export cancelled")
             return
         }
-        if let svgData = svg.data(using: .utf8) {
-            do {
-                try svgData.write(to: url)
-                Logger.export.info("SVG exported: path=\(url.path) bytes=\(svgData.count)")
-            } catch {
-                Logger.export.error("SVG export failed: \(error)")
-                NSAlert(error: error).runModal()
-            }
+        let svg = ExportCore.generateSVG(matrix: matrix, fg: fg, bg: bg, quietZone: quietZone)
+        guard let svgData = svg.data(using: .utf8) else {
+            Logger.export.error("SVG encoding failed")
+            let alert = NSAlert()
+            alert.messageText = "Export Failed"
+            alert.informativeText = "Could not encode SVG data."
+            alert.runModal()
+            return
+        }
+        do {
+            try svgData.write(to: url)
+            Logger.export.info("SVG exported: path=\(url.path) bytes=\(svgData.count)")
+        } catch {
+            Logger.export.error("SVG export failed: \(error)")
+            NSAlert(error: error).runModal()
         }
     }
 

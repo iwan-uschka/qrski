@@ -36,7 +36,9 @@
 #include "qrspec.h"
 #include "split.h"
 
+#undef isdigit
 #define isdigit(__c__) ((unsigned char)((signed char)(__c__) - '0') < 10)
+#undef isalnum
 #define isalnum(__c__) (QRinput_lookAnTable(__c__) >= 0)
 
 #if !HAVE_STRDUP

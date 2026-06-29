@@ -1272,6 +1272,9 @@ static int QRinput_insertFNC1Header(QRinput *input)
 	} else {
 		entry->next = input->head->next;
 		input->head->next = entry;
+		if(input->tail == input->head) {
+			input->tail = entry;
+		}
 	}
 
 	return 0;
@@ -1557,7 +1560,11 @@ QRinput_Struct *QRinput_splitQRinputToStruct(QRinput *input)
 				list = next;
 			} else {
 				/* Current entry will go to the next input. */
-				prev->next = NULL;
+				if(prev != NULL) {
+					prev->next = NULL;
+				} else {
+					input->head = NULL;
+				}
 				p->head = list;
 				p->tail = input->tail;
 				input->tail = prev;

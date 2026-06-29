@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+trap 'rm -f /tmp/qrski_partial.plist' EXIT
 
 VERSION=$(grep -oE '\[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '[]')
 if [ -z "$VERSION" ]; then
@@ -42,13 +43,17 @@ cat > QRski.app/Contents/Info.plist << EOF
   <key>CFBundleDisplayName</key><string>QRski</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${VERSION}</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleVersion</key><string>${VERSION}</string>
   <key>CFBundleIconName</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
 </dict></plist>
 EOF
+
+if [ -f /tmp/qrski_partial.plist ]; then
+  /usr/libexec/PlistBuddy -c "Merge /tmp/qrski_partial.plist" QRski.app/Contents/Info.plist 2>/dev/null || true
+fi
 
 echo "→ Ad-hoc signing..."
 codesign --sign - --force QRski.app

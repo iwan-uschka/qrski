@@ -120,6 +120,7 @@ private struct BlockRowView: View {
                 .disabled(isFirst)
                 .foregroundStyle(isFirst ? Color.secondary.opacity(0.3) : .secondary)
                 .font(.caption)
+                .accessibilityLabel("Move up")
 
                 Button(action: moveDown) {
                     Image(systemName: "chevron.down")
@@ -130,6 +131,7 @@ private struct BlockRowView: View {
                 .disabled(isLast)
                 .foregroundStyle(isLast ? Color.secondary.opacity(0.3) : .secondary)
                 .font(.caption)
+                .accessibilityLabel("Move down")
 
                 Button(action: onDelete) {
                     Image(systemName: "xmark")
@@ -139,6 +141,7 @@ private struct BlockRowView: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .font(.caption)
+                .accessibilityLabel("Delete block")
             }
 
             TabSensitiveTextEditor(text: $block.text, isFocused: $textFocused)

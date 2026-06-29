@@ -23,8 +23,6 @@
 # include "config.h"
 #endif
 #include <stdlib.h>
-#include <string.h>
-#include <limits.h>
 #include <errno.h>
 
 #include "qrencode.h"
@@ -173,7 +171,10 @@ unsigned char *MMask_mask(int version, unsigned char *frame, QRecLevel level)
 			free(bestMask);
 			bestMask = mask;
 			mask = (unsigned char *)malloc((size_t)(width * width));
-			if(mask == NULL) break;
+			if(mask == NULL) {
+				errno = ENOMEM;
+				break;
+			}
 		}
 	}
 	free(mask);

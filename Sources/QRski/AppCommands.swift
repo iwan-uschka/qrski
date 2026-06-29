@@ -50,7 +50,7 @@ struct AppCommands: Commands {
                     matrix: matrix, fg: s.fgColor, bg: s.effectiveBgColor, quietZone: s.quietZone
                 )
             }
-            .keyboardShortcut("k", modifiers: .command)
+            .keyboardShortcut("c", modifiers: [.command, .option])
             .disabled(appState?.matrix == nil)
         }
     }

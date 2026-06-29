@@ -77,7 +77,6 @@ struct _QRinput_Struct {
  */
 extern unsigned char *QRinput_getByteStream(QRinput *input);
 
-
 extern int QRinput_estimateBitsModeNum(int size);
 extern int QRinput_estimateBitsModeAn(int size);
 extern int QRinput_estimateBitsMode8(int size);

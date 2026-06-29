@@ -28,7 +28,6 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "qrspec.h"
@@ -234,6 +233,11 @@ void QRspec_getEccSpec(int version, QRecLevel level, int spec[5])
 	int b1, b2;
 	int data, ecc;
 
+	if(version < 1 || version > QRSPEC_VERSION_MAX) {
+		spec[0] = spec[1] = spec[2] = spec[3] = spec[4] = 0;
+		return;
+	}
+
 	b1 = eccTable[version][level][0];
 	b2 = eccTable[version][level][1];
 	data = QRspec_getDataLength(version, level);
@@ -381,6 +385,7 @@ static const unsigned int formatInfo[4][8] = {
 unsigned int QRspec_getFormatInfo(int mask, QRecLevel level)
 {
 	if(mask < 0 || mask > 7) return 0;
+	if(level < QR_ECLEVEL_L || level > QR_ECLEVEL_H) return 0;
 
 	return formatInfo[level][mask];
 }

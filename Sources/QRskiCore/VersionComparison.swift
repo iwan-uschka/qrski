@@ -2,6 +2,7 @@ import Foundation
 
 /// Returns true if `remote` is a strictly higher semantic version than `local`.
 /// Ignores a leading "v" or "V". Missing components are treated as zero.
+/// Pre-release suffixes (e.g. "-rc1") are not handled and compare as zero for that component.
 public func isVersionNewer(_ remote: String, than local: String) -> Bool {
     let r = versionComponents(remote)
     let l = versionComponents(local)
@@ -14,8 +15,9 @@ public func isVersionNewer(_ remote: String, than local: String) -> Bool {
 }
 
 private func versionComponents(_ version: String) -> [Int] {
-    version
-        .trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+    var trimmed = version
+    if trimmed.hasPrefix("v") || trimmed.hasPrefix("V") { trimmed.removeFirst() }
+    return trimmed
         .split(separator: ".")
         .compactMap { Int($0) }
 }

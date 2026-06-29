@@ -1,8 +1,8 @@
 import CQREncode
-import Foundation
 
 public struct QRMatrix {
     public let width: Int
+    public var height: Int { width }
     public let modules: [[Bool]]
 
     public init(width: Int, modules: [[Bool]]) {
@@ -19,7 +19,14 @@ public struct QRCodeResult {
 public enum ErrorCorrectionLevel: Int, CaseIterable, Identifiable {
     case L = 0, M = 1, Q = 2, H = 3
     public var id: Int { rawValue }
-    public var label: String { ["L – Low", "M – Medium", "Q – Quartile", "H – High"][rawValue] }
+    public var label: String {
+        switch self {
+        case .L: "L – Low"
+        case .M: "M – Medium"
+        case .Q: "Q – Quartile"
+        case .H: "H – High"
+        }
+    }
     public var cValue: QRecLevel {
         switch self {
         case .L: QR_ECLEVEL_L

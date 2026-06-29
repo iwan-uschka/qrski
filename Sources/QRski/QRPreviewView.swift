@@ -7,6 +7,7 @@ struct QRPreviewView: View {
     @State private var zoomScale: Double = 1.0
     @State private var gestureStartScale: Double = 1.0
 
+    private let zoomBarHeight: Double = 44
     private var quietZone: Int { appState.quietZone }
 
     var body: some View {
@@ -162,22 +163,23 @@ struct QRPreviewView: View {
         .menuStyle(.button)
         .buttonStyle(.plain)
         .disabled(appState.matrix == nil)
+        .accessibilityLabel("Export")
     }
 
     // MARK: - Drawing
 
     private func baseModulePx(matrix: QRMatrix, viewSize: CGSize) -> Double {
         let totalModules = Double(matrix.width + 2 * quietZone)
-        let availableSize = min(viewSize.width, viewSize.height - 44)
+        let availableSize = min(viewSize.width, viewSize.height - zoomBarHeight)
         return max(1.0, availableSize / totalModules * 0.9)
     }
 
     private func drawQR(ctx: GraphicsContext, matrix: QRMatrix, modulePx: Double) {
         let totalPx = Double(matrix.width + 2 * quietZone) * modulePx
 
-        if appState.isTransparentBg {
+        if appState.isTransparentBg && !appState.matchViewportBackground {
             drawCheckerboard(ctx: ctx, size: totalPx)
-        } else {
+        } else if !appState.isTransparentBg {
             ctx.fill(
                 Path(CGRect(x: 0, y: 0, width: totalPx, height: totalPx)),
                 with: .color(appState.bgColor)

@@ -28,7 +28,6 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -104,6 +103,7 @@ static const int lengthTableBits[4][4] = {
 int MQRspec_lengthIndicator(QRencodeMode mode, int version)
 {
 	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
+	if(mode < QR_MODE_NUM || mode > QR_MODE_KANJI) return 0;
 	return lengthTableBits[mode][version - 1];
 }
 
@@ -113,6 +113,7 @@ int MQRspec_maximumWords(QRencodeMode mode, int version)
 	int words;
 
 	if(version <= 0 || version > MQRSPEC_VERSION_MAX) return 0;
+	if(mode < QR_MODE_NUM || mode > QR_MODE_KANJI) return 0;
 	bits = lengthTableBits[mode][version - 1];
 	words = (1 << bits) - 1;
 	if(mode == QR_MODE_KANJI) {

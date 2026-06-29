@@ -11,8 +11,6 @@ struct ControlsView: View {
                 Divider()
                 qrParametersSection
                 Divider()
-                pngSizeSection
-                Divider()
                 colorsSection
             }
             .padding()
@@ -57,21 +55,23 @@ struct ControlsView: View {
                 .labelsHidden()
             }
 
-            HStack {
-                Text("Quiet Zone")
-                Spacer()
-                Text("\(appState.quietZone) modules")
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Quiet Zone")
+                    Spacer()
+                    Text("\(appState.quietZone) modules")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                Slider(
+                    value: Binding(
+                        get: { Double(appState.quietZone) },
+                        set: { appState.quietZone = Int($0.rounded()) }
+                    ),
+                    in: 0...8, step: 1
+                )
+                .accessibilityLabel("Quiet Zone")
             }
-            Slider(
-                value: Binding(
-                    get: { Double(appState.quietZone) },
-                    set: { appState.quietZone = Int($0.rounded()) }
-                ),
-                in: 0...8, step: 1
-            )
-            .accessibilityLabel("Quiet Zone")
 
             if let v = appState.actualVersion {
                 Text("Encoded at version \(v) (\((v * 4 + 21))×\((v * 4 + 21)) modules)")
@@ -82,34 +82,6 @@ struct ControlsView: View {
                 Text(err)
                     .font(.caption)
                     .foregroundStyle(.red)
-            }
-        }
-    }
-
-    private var pngSizeSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("PNG Export", systemImage: "photo")
-                .font(.headline)
-            HStack {
-                Text("Module size")
-                Spacer()
-                Text("\(appState.moduleSize) px")
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
-            Slider(
-                value: Binding(
-                    get: { Double(appState.moduleSize) },
-                    set: { appState.moduleSize = Int($0.rounded()) }
-                ),
-                in: 1...32, step: 1
-            )
-            .accessibilityLabel("Module size")
-            if let matrix = appState.matrix {
-                let px = (matrix.width + 2 * appState.quietZone) * appState.moduleSize
-                Text("Output: \(px)×\(px) px")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -147,6 +119,4 @@ struct ControlsView: View {
             }
         }
     }
-
-
 }

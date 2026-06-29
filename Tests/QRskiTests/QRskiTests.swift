@@ -302,10 +302,14 @@ final class VersionComparisonTests: XCTestCase {
 // MARK: - QuietZone in exports
 
 final class QuietZoneTests: XCTestCase {
-    private let matrix: QRMatrix = {
-        let r = QRCodeGenerator.generate(text: "test", version: 1, maskPattern: -1, ecl: .M)!
-        return r.matrix
-    }()
+    private var matrix: QRMatrix!
+
+    override func setUpWithError() throws {
+        let r = try XCTUnwrap(
+            QRCodeGenerator.generate(text: "test", version: 1, maskPattern: -1, ecl: .M)
+        )
+        matrix = r.matrix
+    }
 
     func testPNGSizeWithDefaultQuietZone() throws {
         let data = try XCTUnwrap(ExportCore.generatePNG(matrix: matrix, moduleSize: 1, fg: .black, bg: .white))

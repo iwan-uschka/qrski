@@ -496,6 +496,7 @@ STATIC_IN_RELEASE QRcode *QRcode_encodeMask(QRinput *input, int mask)
 	/* masking */
 	if(mask == -2) { // just for debug purpose
 		masked = (unsigned char *)malloc((size_t)(width * width));
+		if(masked == NULL) goto EXIT;
 		memcpy(masked, frame, (size_t)(width * width));
 	} else if(mask < 0) {
 		masked = Mask_mask(width, frame, input->level);
@@ -583,6 +584,7 @@ STATIC_IN_RELEASE QRcode *QRcode_encodeMaskMQR(QRinput *input, int mask)
 	/* masking */
 	if(mask == -2) { // just for debug purpose
 		masked = (unsigned char *)malloc((size_t)(width * width));
+		if(masked == NULL) goto EXIT;
 		memcpy(masked, frame, (size_t)(width * width));
 	} else if(mask < 0) {
 		masked = MMask_mask(version, frame, input->level);
@@ -654,6 +656,11 @@ QRcode *QRcode_encodeString(const char *string, int version, QRecLevel level, QR
 QRcode *QRcode_encodeStringMQR(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive)
 {
 	int i;
+
+	if(string == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
 
 	if(version <= 0) {
 		version = 1;

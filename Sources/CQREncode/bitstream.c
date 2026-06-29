@@ -24,6 +24,8 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <stdint.h>
 
 #include "bitstream.h"
 
@@ -75,6 +77,7 @@ static int BitStream_expand(BitStream *bstream)
 {
 	unsigned char *data;
 
+	if(bstream->datasize == 0) return -1;
 	data = (unsigned char *)realloc(bstream->data, bstream->datasize * 2);
 	if(data == NULL) {
 		return -1;
@@ -171,6 +174,10 @@ int BitStream_appendBytes(BitStream *bstream, size_t size, unsigned char *data)
 	int ret;
 
 	if(size == 0) return 0;
+	if(size > (SIZE_MAX / 8)) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	while(bstream->datasize - bstream->length < size * 8) {
 		ret = BitStream_expand(bstream);
@@ -185,7 +192,8 @@ int BitStream_appendBytes(BitStream *bstream, size_t size, unsigned char *data)
 unsigned char *BitStream_toByte(BitStream *bstream)
 {
 	size_t i, j, size, bytes, oddbits;
-	unsigned char *data, v;
+	unsigned char *data;
+	unsigned char v;
 	unsigned char *p;
 
 	size = BitStream_size(bstream);

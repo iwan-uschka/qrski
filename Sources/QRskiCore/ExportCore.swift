@@ -65,10 +65,8 @@ public enum ExportCore {
         let ns = NSColor(color).usingColorSpace(.sRGB)
                ?? NSColor(color).usingColorSpace(.genericRGB)
                ?? NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1)
-        let r = Int((ns.redComponent * 255).rounded())
-        let g = Int((ns.greenComponent * 255).rounded())
-        let b = Int((ns.blueComponent * 255).rounded())
-        return String(format: "#%02X%02X%02X", r, g, b)
+        let clamp: (CGFloat) -> Int = { Int(max(0, min(255, ($0 * 255).rounded()))) }
+        return String(format: "#%02X%02X%02X", clamp(ns.redComponent), clamp(ns.greenComponent), clamp(ns.blueComponent))
     }
 
     static func cgColor(_ color: Color) -> CGColor {

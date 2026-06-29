@@ -22,7 +22,7 @@
 - Zoom capped at fit-to-viewport (1×); scroll beyond viewport removed
 - Preview toolbar zoom controls wrap gracefully when the panel is narrow (`ViewThatFits`)
 
-## [1.0.1] - 2026-06-29
+## [1.0.1] - 2026-06-28
 
 ### Added
 - Automatic update check on launch: shows an alert when a newer GitHub release is available

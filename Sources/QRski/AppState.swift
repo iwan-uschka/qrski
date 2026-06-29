@@ -43,7 +43,14 @@ final class AppState {
         didSet { guard !isInitializing else { return }; ud.set(moduleSize, forKey: "moduleSize") }
     }
     var quietZone: Int = ExportCore.defaultQuietZone {
-        didSet { guard !isInitializing else { return }; ud.set(quietZone, forKey: "quietZone") }
+        didSet {
+            guard !isInitializing else { return }
+            if quietZone == ExportCore.defaultQuietZone {
+                ud.removeObject(forKey: "quietZone")
+            } else {
+                ud.set(quietZone, forKey: "quietZone")
+            }
+        }
     }
 
     private(set) var matrix: QRMatrix? = nil
@@ -74,7 +81,7 @@ final class AppState {
         isTransparentBg = ud.bool(forKey: "transparentBg")
         matchViewportBackground = ud.bool(forKey: "matchViewportBg")
         let ms = ud.integer(forKey: "moduleSize"); if ms > 0 { moduleSize = ms }
-        let qz = ud.integer(forKey: "quietZone"); if qz > 0 || ud.object(forKey: "quietZone") != nil { quietZone = qz }
+        if let qz = ud.object(forKey: "quietZone") as? Int { quietZone = qz }
 
         isInitializing = false
         regenerate()
@@ -92,7 +99,7 @@ final class AppState {
             matrix = result.matrix
             actualVersion = result.version
             generationError = nil
-            Logger.generation.info("encoded: version=\(result.version) size=\(result.matrix.width)x\(result.matrix.width) ecl=\(self.ecl.rawValue) mask=\(self.maskPattern) textLen=\(self.inputText.utf8.count)")
+            Logger.generation.info("encoded: version=\(result.version) size=\(result.matrix.width)x\(result.matrix.height) ecl=\(self.ecl.rawValue) mask=\(self.maskPattern) textLen=\(self.inputText.utf8.count)")
         } else {
             matrix = nil; actualVersion = nil
             generationError = "Could not encode — text may be too long for version \(version == 0 ? "auto" : "\(version)")."
