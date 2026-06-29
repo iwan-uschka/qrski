@@ -6,9 +6,9 @@ struct ContentView: View {
     var body: some View {
         HSplitView {
             ControlsView(appState: appState)
-                .frame(minWidth: 260, idealWidth: 280, maxWidth: 320)
+                .frame(minWidth: 260, idealWidth: 280)
             QRPreviewView(appState: appState)
-                .frame(minWidth: 300, minHeight: 300)
+                .frame(minWidth: 200, minHeight: 300)
         }
         .focusedValue(\.appState, appState)
     }
