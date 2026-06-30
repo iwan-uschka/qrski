@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-30
+
 ### Added
 - **Templates**: save and load the full app state (blocks, QR parameters, colors, viewport settings) as `.json` files via `File → Templates → Save / Load`. A built-in `Reset to Default` option restores all settings to their initial values.
 
