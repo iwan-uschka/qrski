@@ -107,13 +107,51 @@ final class AppState {
         }
     }
 
+    func makeTemplate() -> QRskiTemplate {
+        QRskiTemplate(
+            schemaVersion: QRskiTemplate.currentSchemaVersion,
+            blocks: blocks,
+            version: version,
+            maskPattern: maskPattern,
+            ecl: ecl.rawValue,
+            fgColor: colorAsComponents(fgColor),
+            bgColor: colorAsComponents(bgColor),
+            isTransparentBg: isTransparentBg,
+            matchViewportBackground: matchViewportBackground,
+            moduleSize: moduleSize,
+            quietZone: quietZone
+        )
+    }
+
+    func applyTemplate(_ template: QRskiTemplate) {
+        blocks = template.blocks
+        version = template.version
+        maskPattern = template.maskPattern
+        if let level = ErrorCorrectionLevel(rawValue: template.ecl) { ecl = level }
+        if let fg = colorFromComponents(template.fgColor) { fgColor = fg }
+        if let bg = colorFromComponents(template.bgColor) { bgColor = bg }
+        isTransparentBg = template.isTransparentBg
+        matchViewportBackground = template.matchViewportBackground
+        moduleSize = template.moduleSize
+        quietZone = template.quietZone
+    }
+
     private func saveColor(_ color: Color, key: String) {
-        guard let ns = NSColor(color).usingColorSpace(.sRGB) else { return }
-        ud.set([ns.redComponent, ns.greenComponent, ns.blueComponent, ns.alphaComponent], forKey: key)
+        ud.set(colorAsComponents(color), forKey: key)
     }
 
     private func loadColor(key: String) -> Color? {
-        guard let c = ud.array(forKey: key) as? [Double], c.count == 4 else { return nil }
+        guard let c = ud.array(forKey: key) as? [Double] else { return nil }
+        return colorFromComponents(c)
+    }
+
+    private func colorAsComponents(_ color: Color) -> [Double] {
+        guard let ns = NSColor(color).usingColorSpace(.sRGB) else { return [0, 0, 0, 1] }
+        return [ns.redComponent, ns.greenComponent, ns.blueComponent, ns.alphaComponent]
+    }
+
+    private func colorFromComponents(_ c: [Double]) -> Color? {
+        guard c.count == 4 else { return nil }
         return Color(red: c[0], green: c[1], blue: c[2], opacity: c[3])
     }
 }

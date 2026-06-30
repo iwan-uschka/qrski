@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+- **Templates**: save and load the full app state (blocks, QR parameters, colors, viewport settings) as `.json` files via `File → Templates → Save / Load`. A built-in `Reset to Default` option restores all settings to their initial values.
+
+### Changed
+- Export PNG and SVG removed from the File menu — export is exclusively via the overlay button on the preview panel (already the case since 1.1.1; menu items were redundant)
+- `File → Close` moved to the very bottom of the File menu
+
 ### Fixed
 - `make_release.sh` no longer duplicates `[Unreleased]` and version headers when a same-date release already exists in the changelog — replaced two `sed` substitutions with a single `awk` script that only matches the first occurrence
 

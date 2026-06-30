@@ -354,6 +354,84 @@ final class QuietZoneTests: XCTestCase {
     }
 }
 
+// MARK: - QRskiTemplate
+
+final class QRskiTemplateTests: XCTestCase {
+    private func makeTemplate() -> QRskiTemplate {
+        QRskiTemplate(
+            schemaVersion: QRskiTemplate.currentSchemaVersion,
+            blocks: [PayloadBlock(label: "url", text: "https://example.com")],
+            version: 2,
+            maskPattern: 3,
+            ecl: ErrorCorrectionLevel.H.rawValue,
+            fgColor: [0.1, 0.2, 0.3, 1.0],
+            bgColor: [0.9, 0.8, 0.7, 1.0],
+            isTransparentBg: true,
+            matchViewportBackground: true,
+            moduleSize: 12,
+            quietZone: 6
+        )
+    }
+
+    func testCodableRoundTrip() throws {
+        let original = makeTemplate()
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(QRskiTemplate.self, from: data)
+
+        XCTAssertEqual(decoded.schemaVersion, original.schemaVersion)
+        XCTAssertEqual(decoded.blocks.count, 1)
+        XCTAssertEqual(decoded.blocks[0].label, "url")
+        XCTAssertEqual(decoded.blocks[0].text, "https://example.com")
+        XCTAssertEqual(decoded.version, 2)
+        XCTAssertEqual(decoded.maskPattern, 3)
+        XCTAssertEqual(decoded.ecl, ErrorCorrectionLevel.H.rawValue)
+        XCTAssertEqual(decoded.fgColor, [0.1, 0.2, 0.3, 1.0])
+        XCTAssertEqual(decoded.bgColor, [0.9, 0.8, 0.7, 1.0])
+        XCTAssertTrue(decoded.isTransparentBg)
+        XCTAssertTrue(decoded.matchViewportBackground)
+        XCTAssertEqual(decoded.moduleSize, 12)
+        XCTAssertEqual(decoded.quietZone, 6)
+    }
+
+    func testDefaultTemplateValues() {
+        let t = QRskiTemplate.default
+        XCTAssertEqual(t.schemaVersion, QRskiTemplate.currentSchemaVersion)
+        XCTAssertEqual(t.blocks.count, 1)
+        XCTAssertEqual(t.blocks[0].label, "")
+        XCTAssertEqual(t.blocks[0].text, "")
+        XCTAssertEqual(t.version, 0)
+        XCTAssertEqual(t.maskPattern, -1)
+        XCTAssertEqual(t.ecl, ErrorCorrectionLevel.M.rawValue)
+        XCTAssertEqual(t.fgColor, [0, 0, 0, 1])
+        XCTAssertEqual(t.bgColor, [1, 1, 1, 1])
+        XCTAssertFalse(t.isTransparentBg)
+        XCTAssertFalse(t.matchViewportBackground)
+        XCTAssertEqual(t.moduleSize, 10)
+        XCTAssertEqual(t.quietZone, ExportCore.defaultQuietZone)
+    }
+
+    func testDecodingIgnoresUnknownFields() throws {
+        // Simulates a template saved by a future version of QRski that added new fields
+        let json = """
+        {
+            "schemaVersion": 1,
+            "blocks": [],
+            "version": 0,
+            "maskPattern": -1,
+            "ecl": 1,
+            "fgColor": [0,0,0,1],
+            "bgColor": [1,1,1,1],
+            "isTransparentBg": false,
+            "matchViewportBackground": false,
+            "moduleSize": 10,
+            "quietZone": 4,
+            "unknownFutureField": "some value"
+        }
+        """.data(using: .utf8)!
+        XCTAssertNoThrow(try JSONDecoder().decode(QRskiTemplate.self, from: json))
+    }
+}
+
 // MARK: - PayloadBlock Codable
 
 final class PayloadBlockCodableTests: XCTestCase {
