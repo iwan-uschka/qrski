@@ -13,6 +13,7 @@ Pre-built releases (macOS app bundle, zipped) are available on the [Releases pag
 ## Features
 
 - **Payload block system**: compose the QR payload from multiple text blocks with optional labels — edit only the part that changes without touching the rest
+- **Templates**: save and load the full app state (blocks, QR parameters, colors, viewport settings) as `.json` files via `File → Templates`; includes a built-in `Reset to Default`
 - QR code generation with full parameter control: version (1–40), mask pattern (auto/0–7), error correction (L/M/Q/H), quiet zone (0–8 modules)
 - Real-time preview with zoom slider and pinch-to-zoom; optional viewport background matching
 - Foreground/background color pickers; transparent background with checkerboard preview

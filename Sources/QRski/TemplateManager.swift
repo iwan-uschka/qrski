@@ -28,7 +28,6 @@ enum TemplateManager {
     static func load() -> QRskiTemplate? {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json]
-        panel.allowsMultipleSelection = false
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         do {
             let data = try Data(contentsOf: url)

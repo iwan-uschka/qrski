@@ -46,9 +46,16 @@ private class FileMenuDelegate: NSObject, NSMenuDelegate {
         }) else { return }
         let lastNonSep = menu.items.lastIndex(where: { !$0.isSeparatorItem }) ?? 0
         guard closeIndex != lastNonSep else { return }
-        let closeItem = menu.items[closeIndex]
-        menu.removeItem(at: closeIndex)
+
+        // Move Close and its Close All alternate (the immediately-following isAlternate item)
+        // together — moving Close alone orphans Close All and makes it invisible.
+        var toMove: [NSMenuItem] = [menu.items[closeIndex]]
+        let nextIdx = closeIndex + 1
+        if nextIdx < menu.items.count, menu.items[nextIdx].isAlternate {
+            toMove.append(menu.items[nextIdx])
+        }
+        toMove.reversed().forEach { menu.removeItem($0) }
         if menu.items.last?.isSeparatorItem == false { menu.addItem(.separator()) }
-        menu.addItem(closeItem)
+        toMove.forEach { menu.addItem($0) }
     }
 }

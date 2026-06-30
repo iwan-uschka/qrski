@@ -16,7 +16,7 @@ public struct QRCodeResult {
     public let version: Int
 }
 
-public enum ErrorCorrectionLevel: Int, CaseIterable, Identifiable {
+public enum ErrorCorrectionLevel: Int, CaseIterable, Codable, Identifiable {
     case L = 0, M = 1, Q = 2, H = 3
     public var id: Int { rawValue }
     public var label: String {

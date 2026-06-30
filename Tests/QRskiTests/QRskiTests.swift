@@ -363,7 +363,7 @@ final class QRskiTemplateTests: XCTestCase {
             blocks: [PayloadBlock(label: "url", text: "https://example.com")],
             version: 2,
             maskPattern: 3,
-            ecl: ErrorCorrectionLevel.H.rawValue,
+            ecl: ErrorCorrectionLevel.H,
             fgColor: [0.1, 0.2, 0.3, 1.0],
             bgColor: [0.9, 0.8, 0.7, 1.0],
             isTransparentBg: true,
@@ -384,7 +384,7 @@ final class QRskiTemplateTests: XCTestCase {
         XCTAssertEqual(decoded.blocks[0].text, "https://example.com")
         XCTAssertEqual(decoded.version, 2)
         XCTAssertEqual(decoded.maskPattern, 3)
-        XCTAssertEqual(decoded.ecl, ErrorCorrectionLevel.H.rawValue)
+        XCTAssertEqual(decoded.ecl, ErrorCorrectionLevel.H)
         XCTAssertEqual(decoded.fgColor, [0.1, 0.2, 0.3, 1.0])
         XCTAssertEqual(decoded.bgColor, [0.9, 0.8, 0.7, 1.0])
         XCTAssertTrue(decoded.isTransparentBg)
@@ -401,7 +401,7 @@ final class QRskiTemplateTests: XCTestCase {
         XCTAssertEqual(t.blocks[0].text, "")
         XCTAssertEqual(t.version, 0)
         XCTAssertEqual(t.maskPattern, -1)
-        XCTAssertEqual(t.ecl, ErrorCorrectionLevel.M.rawValue)
+        XCTAssertEqual(t.ecl, ErrorCorrectionLevel.M)
         XCTAssertEqual(t.fgColor, [0, 0, 0, 1])
         XCTAssertEqual(t.bgColor, [1, 1, 1, 1])
         XCTAssertFalse(t.isTransparentBg)
@@ -410,11 +410,49 @@ final class QRskiTemplateTests: XCTestCase {
         XCTAssertEqual(t.quietZone, ExportCore.defaultQuietZone)
     }
 
+    func testDecodingRejectsInvalidColorArrayLength() {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "blocks": [],
+            "version": 0,
+            "maskPattern": -1,
+            "ecl": 1,
+            "fgColor": [0,0,0],
+            "bgColor": [1,1,1,1],
+            "isTransparentBg": false,
+            "matchViewportBackground": false,
+            "moduleSize": 10,
+            "quietZone": 4
+        }
+        """.data(using: .utf8)!
+        XCTAssertThrowsError(try JSONDecoder().decode(QRskiTemplate.self, from: json))
+    }
+
+    func testDecodingRejectsInvalidECLValue() {
+        let json = """
+        {
+            "schemaVersion": 1,
+            "blocks": [],
+            "version": 0,
+            "maskPattern": -1,
+            "ecl": 99,
+            "fgColor": [0,0,0,1],
+            "bgColor": [1,1,1,1],
+            "isTransparentBg": false,
+            "matchViewportBackground": false,
+            "moduleSize": 10,
+            "quietZone": 4
+        }
+        """.data(using: .utf8)!
+        XCTAssertThrowsError(try JSONDecoder().decode(QRskiTemplate.self, from: json))
+    }
+
     func testDecodingIgnoresUnknownFields() throws {
         // Simulates a template saved by a future version of QRski that added new fields
         let json = """
         {
-            "schemaVersion": 1,
+            "schemaVersion": 999,
             "blocks": [],
             "version": 0,
             "maskPattern": -1,

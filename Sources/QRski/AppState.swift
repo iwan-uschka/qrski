@@ -6,26 +6,40 @@ import QRskiCore
 @Observable
 final class AppState {
     @ObservationIgnored private var isInitializing = true
+    @ObservationIgnored private var isApplyingTemplate = false
 
     var blocks: [PayloadBlock] = [] {
         didSet {
             guard !isInitializing else { return }
             if let data = try? JSONEncoder().encode(blocks) { ud.set(data, forKey: "blocks") }
             Logger.blocks.debug("blocks changed: count=\(self.blocks.count)")
+            guard !isApplyingTemplate else { return }
             regenerate()
         }
     }
     var version: Int = 0 {
-        didSet { guard !isInitializing else { return }; ud.set(version, forKey: "version"); regenerate() }
+        didSet {
+            guard !isInitializing else { return }
+            ud.set(version, forKey: "version")
+            guard !isApplyingTemplate else { return }
+            regenerate()
+        }
     }
     var maskPattern: Int = -1 {
         didSet {
             guard !isInitializing else { return }
-            ud.set(maskPattern, forKey: "maskPattern"); ud.set(true, forKey: "maskSet"); regenerate()
+            ud.set(maskPattern, forKey: "maskPattern"); ud.set(true, forKey: "maskSet")
+            guard !isApplyingTemplate else { return }
+            regenerate()
         }
     }
     var ecl: ErrorCorrectionLevel = .M {
-        didSet { guard !isInitializing else { return }; ud.set(ecl.rawValue, forKey: "ecl"); regenerate() }
+        didSet {
+            guard !isInitializing else { return }
+            ud.set(ecl.rawValue, forKey: "ecl")
+            guard !isApplyingTemplate else { return }
+            regenerate()
+        }
     }
     var fgColor: Color = .black {
         didSet { guard !isInitializing else { return }; saveColor(fgColor, key: "fgColor") }
@@ -113,9 +127,9 @@ final class AppState {
             blocks: blocks,
             version: version,
             maskPattern: maskPattern,
-            ecl: ecl.rawValue,
-            fgColor: colorAsComponents(fgColor),
-            bgColor: colorAsComponents(bgColor),
+            ecl: ecl,
+            fgColor: colorAsComponents(fgColor) ?? [0, 0, 0, 1],
+            bgColor: colorAsComponents(bgColor) ?? [0, 0, 0, 1],
             isTransparentBg: isTransparentBg,
             matchViewportBackground: matchViewportBackground,
             moduleSize: moduleSize,
@@ -124,20 +138,30 @@ final class AppState {
     }
 
     func applyTemplate(_ template: QRskiTemplate) {
+        guard
+            let fg = colorFromComponents(template.fgColor),
+            let bg = colorFromComponents(template.bgColor)
+        else {
+            generationError = "Template contains invalid values and was not applied."
+            return
+        }
+        isApplyingTemplate = true
         blocks = template.blocks
         version = template.version
         maskPattern = template.maskPattern
-        if let level = ErrorCorrectionLevel(rawValue: template.ecl) { ecl = level }
-        if let fg = colorFromComponents(template.fgColor) { fgColor = fg }
-        if let bg = colorFromComponents(template.bgColor) { bgColor = bg }
+        ecl = template.ecl
+        fgColor = fg
+        bgColor = bg
         isTransparentBg = template.isTransparentBg
         matchViewportBackground = template.matchViewportBackground
         moduleSize = template.moduleSize
         quietZone = template.quietZone
+        isApplyingTemplate = false
+        regenerate()
     }
 
     private func saveColor(_ color: Color, key: String) {
-        ud.set(colorAsComponents(color), forKey: key)
+        if let c = colorAsComponents(color) { ud.set(c, forKey: key) }
     }
 
     private func loadColor(key: String) -> Color? {
@@ -145,8 +169,8 @@ final class AppState {
         return colorFromComponents(c)
     }
 
-    private func colorAsComponents(_ color: Color) -> [Double] {
-        guard let ns = NSColor(color).usingColorSpace(.sRGB) else { return [0, 0, 0, 1] }
+    private func colorAsComponents(_ color: Color) -> [Double]? {
+        guard let ns = NSColor(color).usingColorSpace(.sRGB) else { return nil }
         return [ns.redComponent, ns.greenComponent, ns.blueComponent, ns.alphaComponent]
     }
 

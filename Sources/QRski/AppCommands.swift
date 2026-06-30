@@ -38,7 +38,6 @@ struct AppCommands: Commands {
                 )
             }
             .keyboardShortcut("c", modifiers: [.command, .option])
-            .disabled(appState.matrix == nil)
         }
     }
 }
