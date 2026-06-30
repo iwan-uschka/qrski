@@ -4,7 +4,7 @@ public struct QRskiTemplate: Codable {
     // Bump this and add migration logic in init(from:) when the schema changes
     public static let currentSchemaVersion = 1
 
-    public var schemaVersion: Int
+    public let schemaVersion: Int
     public var blocks: [PayloadBlock]
     public var version: Int
     // maskPattern: valid domain is -1 (auto) or 0–7; QRCodeGenerator.generate enforces this at call time
@@ -44,6 +44,8 @@ public struct QRskiTemplate: Codable {
         moduleSize: Int,
         quietZone: Int
     ) {
+        precondition(fgColor.count == 4, "fgColor must have exactly 4 RGBA components")
+        precondition(bgColor.count == 4, "bgColor must have exactly 4 RGBA components")
         self.schemaVersion = schemaVersion
         self.blocks = blocks
         self.version = version
@@ -66,6 +68,12 @@ public struct QRskiTemplate: Codable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         schemaVersion = try c.decode(Int.self, forKey: .schemaVersion)
+        guard schemaVersion <= QRskiTemplate.currentSchemaVersion else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Template was saved with schema version \(schemaVersion), but this build only supports up to \(QRskiTemplate.currentSchemaVersion)"
+            ))
+        }
         blocks = try c.decode([PayloadBlock].self, forKey: .blocks)
         version = try c.decode(Int.self, forKey: .version)
         maskPattern = try c.decode(Int.self, forKey: .maskPattern)

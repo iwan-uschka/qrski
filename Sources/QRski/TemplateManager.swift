@@ -17,7 +17,7 @@ enum TemplateManager {
             encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(template)
             try data.write(to: url)
-            Logger.export.info("Template saved: path=\(url.path)")
+            Logger.export.info("Template saved: path=\(url.path(percentEncoded: false))")
         } catch {
             Logger.export.error("Template save failed: \(error)")
             NSAlert(error: error).runModal()
@@ -36,7 +36,7 @@ enum TemplateManager {
                 showError("This template was saved with a newer version of QRski and cannot be opened.")
                 return nil
             }
-            Logger.export.info("Template loaded: path=\(url.path)")
+            Logger.export.info("Template loaded: path=\(url.path(percentEncoded: false))")
             return template
         } catch {
             Logger.export.error("Template load failed: \(error)")
@@ -45,6 +45,7 @@ enum TemplateManager {
         }
     }
 
+    @MainActor
     private static func showError(_ message: String) {
         let alert = NSAlert()
         alert.messageText = "Could not Load Template"

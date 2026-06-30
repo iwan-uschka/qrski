@@ -129,7 +129,7 @@ final class AppState {
             maskPattern: maskPattern,
             ecl: ecl,
             fgColor: colorAsComponents(fgColor) ?? [0, 0, 0, 1],
-            bgColor: colorAsComponents(bgColor) ?? [0, 0, 0, 1],
+            bgColor: colorAsComponents(bgColor) ?? [1, 1, 1, 1],
             isTransparentBg: isTransparentBg,
             matchViewportBackground: matchViewportBackground,
             moduleSize: moduleSize,
@@ -146,6 +146,7 @@ final class AppState {
             return
         }
         isApplyingTemplate = true
+        defer { isApplyingTemplate = false }
         blocks = template.blocks
         version = template.version
         maskPattern = template.maskPattern
@@ -156,7 +157,6 @@ final class AppState {
         matchViewportBackground = template.matchViewportBackground
         moduleSize = template.moduleSize
         quietZone = template.quietZone
-        isApplyingTemplate = false
         regenerate()
     }
 

@@ -30,11 +30,36 @@ private class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.activate()
         NSApp.windows.first?.makeKeyAndOrderFront(nil)
-        DispatchQueue.main.async {
-            guard let fileMenu = NSApp.mainMenu?.item(withTitle: "File")?.submenu else { return }
-            let delegate = FileMenuDelegate()
-            self.fileMenuDelegate = delegate
-            fileMenu.delegate = delegate
+        installFileMenuDelegate()
+        // Recovery: reinstall the delegate each time the user activates the menu bar,
+        // in case SwiftUI dropped it during an AppCommands rebuild (e.g. after template load).
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(menuBarDidBeginTracking(_:)),
+            name: NSMenu.didBeginTrackingNotification,
+            object: nil
+        )
+    }
+
+    @objc private func menuBarDidBeginTracking(_ notification: Notification) {
+        guard notification.object as? NSMenu === NSApp.mainMenu,
+              let fileMenu = NSApp.mainMenu?.item(withTitle: "File")?.submenu,
+              !(fileMenu.delegate is FileMenuDelegate) else { return }
+        let delegate = FileMenuDelegate()
+        fileMenuDelegate = delegate
+        fileMenu.delegate = delegate
+    }
+
+    private func installFileMenuDelegate() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.fileMenuDelegate == nil else { return }
+            if let fileMenu = NSApp.mainMenu?.item(withTitle: "File")?.submenu {
+                let delegate = FileMenuDelegate()
+                self.fileMenuDelegate = delegate
+                fileMenu.delegate = delegate
+            } else {
+                self.installFileMenuDelegate()
+            }
         }
     }
 }
@@ -45,7 +70,11 @@ private class FileMenuDelegate: NSObject, NSMenuDelegate {
             $0.keyEquivalent == "w" && $0.keyEquivalentModifierMask == .command
         }) else { return }
         let lastNonSep = menu.items.lastIndex(where: { !$0.isSeparatorItem }) ?? 0
-        guard closeIndex != lastNonSep else { return }
+        let closeAllIdx = (closeIndex + 1 < menu.items.count && menu.items[closeIndex + 1].isAlternate)
+            ? closeIndex + 1
+            : nil
+        let expectedLastNonSep = closeAllIdx ?? closeIndex
+        guard expectedLastNonSep != lastNonSep else { return }
 
         // Move Close and its Close All alternate (the immediately-following isAlternate item)
         // together — moving Close alone orphans Close All and makes it invisible.

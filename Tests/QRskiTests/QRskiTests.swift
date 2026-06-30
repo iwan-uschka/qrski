@@ -374,6 +374,7 @@ final class QRskiTemplateTests: XCTestCase {
     }
 
     func testCodableRoundTrip() throws {
+        continueAfterFailure = false
         let original = makeTemplate()
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(QRskiTemplate.self, from: data)
@@ -394,6 +395,7 @@ final class QRskiTemplateTests: XCTestCase {
     }
 
     func testDefaultTemplateValues() {
+        continueAfterFailure = false
         let t = QRskiTemplate.default
         XCTAssertEqual(t.schemaVersion, QRskiTemplate.currentSchemaVersion)
         XCTAssertEqual(t.blocks.count, 1)
@@ -448,11 +450,10 @@ final class QRskiTemplateTests: XCTestCase {
         XCTAssertThrowsError(try JSONDecoder().decode(QRskiTemplate.self, from: json))
     }
 
-    func testDecodingIgnoresUnknownFields() throws {
-        // Simulates a template saved by a future version of QRski that added new fields
+    func testDecodingIgnoresUnknownJsonField() throws {
         let json = """
         {
-            "schemaVersion": 999,
+            "schemaVersion": \(QRskiTemplate.currentSchemaVersion),
             "blocks": [],
             "version": 0,
             "maskPattern": -1,
@@ -467,6 +468,25 @@ final class QRskiTemplateTests: XCTestCase {
         }
         """.data(using: .utf8)!
         XCTAssertNoThrow(try JSONDecoder().decode(QRskiTemplate.self, from: json))
+    }
+
+    func testDecodingRejectsFutureSchemaVersion() throws {
+        let json = """
+        {
+            "schemaVersion": 999,
+            "blocks": [],
+            "version": 0,
+            "maskPattern": -1,
+            "ecl": 1,
+            "fgColor": [0,0,0,1],
+            "bgColor": [1,1,1,1],
+            "isTransparentBg": false,
+            "matchViewportBackground": false,
+            "moduleSize": 10,
+            "quietZone": 4
+        }
+        """.data(using: .utf8)!
+        XCTAssertThrowsError(try JSONDecoder().decode(QRskiTemplate.self, from: json))
     }
 }
 
