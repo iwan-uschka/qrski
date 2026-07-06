@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-06
+
 ### Fixed
 - Loading a template file with an out-of-range `version` value crashed the app instead of showing an error
 - Loading a template with an extreme `quietZone` value could freeze the preview; `version` and `quietZone` are now clamped to their valid ranges when a template is applied
