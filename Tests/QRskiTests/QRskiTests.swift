@@ -71,6 +71,21 @@ final class QRCodeGeneratorTests: XCTestCase {
         )
     }
 
+    func testOutOfRangeVersionReturnsNilInsteadOfCrashing() {
+        // A version that doesn't fit Int32 must be rejected before the Int32(version)
+        // conversion, which traps on overflow. Regression for a crash via untrusted
+        // template files (see QRskiTemplate, which decodes `version` unbounded).
+        XCTAssertNil(
+            QRCodeGenerator.generate(text: "test", version: 99_999_999_999, maskPattern: -1, ecl: ErrorCorrectionLevel.M)
+        )
+        XCTAssertNil(
+            QRCodeGenerator.generate(text: "test", version: -1, maskPattern: -1, ecl: ErrorCorrectionLevel.M)
+        )
+        XCTAssertNil(
+            QRCodeGenerator.generate(text: "test", version: 41, maskPattern: -1, ecl: ErrorCorrectionLevel.M)
+        )
+    }
+
     func testURLText() throws {
         let r = try XCTUnwrap(
             QRCodeGenerator.generate(text: "https://example.com", version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.M)

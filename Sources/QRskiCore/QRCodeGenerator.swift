@@ -43,6 +43,8 @@ public enum QRCodeGenerator {
         // -1 = auto; 0-7 = specific pattern. -2 is an undocumented C-level debug path that
         // returns a non-nil but unmasked (unscannable) code, bypassing the nil guard below.
         guard maskPattern >= -1 && maskPattern <= 7 else { return nil }
+        // version must fit Int32 before conversion below — Int32(version) traps on overflow otherwise.
+        guard version >= 0 && version <= 40 else { return nil }
         guard let input = QRinput_new2(Int32(version), ecl.cValue) else { return nil }
         defer { QRinput_free(input) }
 

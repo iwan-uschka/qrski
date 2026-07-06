@@ -7,6 +7,7 @@ import QRskiCore
 final class AppState {
     @ObservationIgnored private var isInitializing = true
     @ObservationIgnored private var isApplyingTemplate = false
+    @ObservationIgnored private var regenerateTask: Task<Void, Never>?
 
     var blocks: [PayloadBlock] = [] {
         didSet {
@@ -14,7 +15,7 @@ final class AppState {
             if let data = try? JSONEncoder().encode(blocks) { ud.set(data, forKey: "blocks") }
             Logger.blocks.debug("blocks changed: count=\(self.blocks.count)")
             guard !isApplyingTemplate else { return }
-            regenerate()
+            scheduleRegenerate()
         }
     }
     var version: Int = 0 {
@@ -101,6 +102,17 @@ final class AppState {
         regenerate()
     }
 
+    // Debounces regeneration while the user is actively typing, so every keystroke
+    // doesn't trigger a synchronous C-level QR encode on the main thread.
+    private func scheduleRegenerate() {
+        regenerateTask?.cancel()
+        regenerateTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            self.regenerate()
+        }
+    }
+
     func regenerate() {
         guard !inputText.isEmpty else {
             matrix = nil; actualVersion = nil; generationError = nil
@@ -148,7 +160,7 @@ final class AppState {
         isApplyingTemplate = true
         defer { isApplyingTemplate = false }
         blocks = template.blocks
-        version = template.version
+        version = max(0, min(template.version, 40))
         maskPattern = template.maskPattern
         ecl = template.ecl
         fgColor = fg
@@ -156,7 +168,9 @@ final class AppState {
         isTransparentBg = template.isTransparentBg
         matchViewportBackground = template.matchViewportBackground
         moduleSize = template.moduleSize
-        quietZone = template.quietZone
+        // quietZone drives the checkerboard preview's O(n²) fill loop — an unclamped
+        // value from a template file could otherwise freeze the UI on render.
+        quietZone = max(0, min(template.quietZone, 8))
         regenerate()
     }
 

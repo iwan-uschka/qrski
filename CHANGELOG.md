@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Loading a template file with an out-of-range `version` value crashed the app instead of showing an error
+- Loading a template with an extreme `quietZone` value could freeze the preview; `version` and `quietZone` are now clamped to their valid ranges when a template is applied
+- Typing in a content block no longer re-encodes the QR code on every keystroke — regeneration is now debounced
+
 ## [1.2.0] - 2026-06-30
 
 ### Added
