@@ -5,6 +5,8 @@ import UniformTypeIdentifiers
 import QRskiCore
 
 enum TemplateManager {
+    private struct SchemaProbe: Decodable { let schemaVersion: Int }
+
     @MainActor
     static func save(_ template: QRskiTemplate, suggestedName: String) {
         let panel = NSSavePanel()
@@ -31,11 +33,14 @@ enum TemplateManager {
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         do {
             let data = try Data(contentsOf: url)
-            let template = try JSONDecoder().decode(QRskiTemplate.self, from: data)
-            guard template.schemaVersion <= QRskiTemplate.currentSchemaVersion else {
+            // QRskiTemplate.init(from:) throws on a future schemaVersion, so probe it first to
+            // distinguish that case and show the specific message instead of the generic one.
+            let probe = try JSONDecoder().decode(SchemaProbe.self, from: data)
+            guard probe.schemaVersion <= QRskiTemplate.currentSchemaVersion else {
                 showError("This template was saved with a newer version of QRski and cannot be opened.")
                 return nil
             }
+            let template = try JSONDecoder().decode(QRskiTemplate.self, from: data)
             Logger.export.info("Template loaded: path=\(url.path(percentEncoded: false))")
             return template
         } catch {

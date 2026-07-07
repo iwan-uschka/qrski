@@ -19,5 +19,7 @@ private func versionComponents(_ version: String) -> [Int] {
     if trimmed.hasPrefix("v") || trimmed.hasPrefix("V") { trimmed.removeFirst() }
     return trimmed
         .split(separator: ".")
-        .compactMap { Int($0) }
+        // Non-numeric components (e.g. a "-rc1" pre-release suffix) map to 0 rather than being
+        // dropped, so later components keep their positions ("1.x.5" is [1,0,5], not [1,5]).
+        .map { Int($0) ?? 0 }
 }

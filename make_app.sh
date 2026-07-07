@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
-trap 'rm -f /tmp/qrski_partial.plist' EXIT
+# BSD mktemp only substitutes trailing X's, so make a temp dir and place the .plist inside it.
+PARTIAL_DIR=$(mktemp -d /tmp/qrski_partial.XXXXXX)
+PARTIAL_PLIST="$PARTIAL_DIR/partial.plist"
+trap 'rm -rf "$PARTIAL_DIR"' EXIT
 
 VERSION=$(grep -oE '\[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '[]')
 if [ -z "$VERSION" ]; then
@@ -23,7 +26,7 @@ echo "→ Compiling asset catalog..."
 xcrun actool \
   --output-format human-readable-text \
   --notices --warnings \
-  --output-partial-info-plist /tmp/qrski_partial.plist \
+  --output-partial-info-plist "$PARTIAL_PLIST" \
   --app-icon AppIcon \
   --compress-pngs \
   --enable-on-demand-resources NO \
@@ -51,8 +54,8 @@ cat > QRski.app/Contents/Info.plist << EOF
 </dict></plist>
 EOF
 
-if [ -f /tmp/qrski_partial.plist ]; then
-  /usr/libexec/PlistBuddy -c "Merge /tmp/qrski_partial.plist" QRski.app/Contents/Info.plist 2>/dev/null || true
+if [ -f "$PARTIAL_PLIST" ]; then
+  /usr/libexec/PlistBuddy -c "Merge $PARTIAL_PLIST" QRski.app/Contents/Info.plist 2>/dev/null || true
 fi
 
 echo "→ Ad-hoc signing..."

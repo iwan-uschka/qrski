@@ -9,9 +9,17 @@ final class UpdateChecker {
 
     private let apiURL = URL(string: "https://api.github.com/repos/iwan-uschka/qrski/releases/latest")!
 
+    private var didRunSilentCheck = false
+
     private init() {}
 
     func check(silent: Bool) {
+        // Every window's .task fires a silent check, and File → New Window can spawn many —
+        // only the first silent check runs so a new window doesn't re-prompt. Explicit checks always run.
+        if silent {
+            guard !didRunSilentCheck else { return }
+            didRunSilentCheck = true
+        }
         guard let local = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
             Logger.update.debug("skipping update check: no bundle version (development build)")
             return
@@ -53,7 +61,17 @@ final class UpdateChecker {
         alert.informativeText = "QRski \(version) is available. You have \(localVersion)."
         alert.addButton(withTitle: "Download")
         alert.addButton(withTitle: "Later")
-        if alert.runModal() == .alertFirstButtonReturn, let releaseURL = URL(string: url) {
+        if alert.runModal() == .alertFirstButtonReturn {
+            // url comes straight from the GitHub API JSON — only open it if it's an https
+            // github.com URL, never an arbitrary scheme/host from a tampered response.
+            guard let releaseURL = URL(string: url),
+                  releaseURL.scheme == "https",
+                  let host = releaseURL.host,
+                  host == "github.com" || host.hasSuffix(".github.com")
+            else {
+                Logger.update.error("refusing to open untrusted release URL: \(url)")
+                return
+            }
             NSWorkspace.shared.open(releaseURL)
         }
     }

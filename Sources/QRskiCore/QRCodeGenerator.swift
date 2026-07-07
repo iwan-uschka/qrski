@@ -49,6 +49,8 @@ public enum QRCodeGenerator {
         defer { QRinput_free(input) }
 
         let bytes = Array(text.utf8)
+        // byte count must fit Int32 before conversion below — Int32(bytes.count) traps on overflow otherwise.
+        guard bytes.count <= Int32.max else { return nil }
         let appendResult: Int32 = bytes.withUnsafeBytes { rawPtr in
             guard let ptr = rawPtr.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return -1 }
             return QRinput_append(input, QR_MODE_8, Int32(bytes.count), ptr)

@@ -4,6 +4,7 @@ import OSLog
 import QRskiCore
 
 @Observable
+@MainActor
 final class AppState {
     @ObservationIgnored private var isInitializing = true
     @ObservationIgnored private var isApplyingTemplate = false
@@ -96,7 +97,8 @@ final class AppState {
         isTransparentBg = ud.bool(forKey: "transparentBg")
         matchViewportBackground = ud.bool(forKey: "matchViewportBg")
         let ms = ud.integer(forKey: "moduleSize"); if ms > 0 { moduleSize = ms }
-        if let qz = ud.object(forKey: "quietZone") as? Int { quietZone = qz }
+        // Clamp like applyTemplate — an unclamped quietZone drives the preview's O(n²) fill loop.
+        if let qz = ud.object(forKey: "quietZone") as? Int { quietZone = max(0, min(qz, 8)) }
 
         isInitializing = false
         regenerate()
@@ -159,9 +161,11 @@ final class AppState {
         }
         isApplyingTemplate = true
         defer { isApplyingTemplate = false }
-        blocks = template.blocks
+        // Templates can carry an empty blocks array; the app requires at least one block.
+        blocks = template.blocks.isEmpty ? [PayloadBlock()] : template.blocks
         version = max(0, min(template.version, 40))
-        maskPattern = template.maskPattern
+        // maskPattern valid domain is -1 (auto) through 7.
+        maskPattern = max(-1, min(template.maskPattern, 7))
         ecl = template.ecl
         fgColor = fg
         bgColor = bg

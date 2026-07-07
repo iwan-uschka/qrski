@@ -56,6 +56,17 @@ final class QRCodeGeneratorTests: XCTestCase {
         )
     }
 
+    func testOutOfRangeMaskPatternReturnsNil() {
+        // -2 is a C-level debug path that returns a non-nil but unmasked (unscannable) code,
+        // so it must be rejected up front, like any other out-of-range value.
+        XCTAssertNil(
+            QRCodeGenerator.generate(text: "test", version: 1, maskPattern: -2, ecl: ErrorCorrectionLevel.M)
+        )
+        XCTAssertNil(
+            QRCodeGenerator.generate(text: "test", version: 1, maskPattern: 8, ecl: ErrorCorrectionLevel.M)
+        )
+    }
+
     func testAllECLevels() {
         for ecl in ErrorCorrectionLevel.allCases {
             XCTAssertNotNil(
@@ -311,6 +322,17 @@ final class VersionComparisonTests: XCTestCase {
 
     func testZeroVersions() {
         XCTAssertFalse(isVersionNewer("0.0.0", than: "0.0.0"))
+    }
+
+    func testPreReleaseSuffixComparesAsZero() {
+        // "1.0.0-rc1" parses as [1, 0, 0] — the suffix component compares as zero
+        XCTAssertTrue(isVersionNewer("1.0.1", than: "1.0.0-rc1"))
+    }
+
+    func testNonNumericMiddleComponentIsZeroNotDropped() {
+        // "1.x.5" must parse as [1, 0, 5], not [1, 5]
+        XCTAssertTrue(isVersionNewer("1.x.5", than: "1.0.4"))
+        XCTAssertFalse(isVersionNewer("1.x.5", than: "1.4.9"))
     }
 }
 

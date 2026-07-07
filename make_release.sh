@@ -27,6 +27,10 @@ if [ -z "$UNRELEASED" ]; then
   exit 1
 fi
 
+# Keep a pre-stamp backup so a failed build below doesn't leave CHANGELOG.md already stamped.
+cp CHANGELOG.md CHANGELOG.md.bak
+trap 'if [ $? -ne 0 ] && [ -f CHANGELOG.md.bak ]; then mv CHANGELOG.md.bak CHANGELOG.md; echo "→ CHANGELOG.md restored"; else rm -f CHANGELOG.md.bak; fi' EXIT
+
 # Stamp [Unreleased] → [VERSION] - DATE and prepend a fresh [Unreleased]
 awk -v ver="${VERSION}" -v date="${TODAY}" '
   !done && /^## \[Unreleased\]/ {
