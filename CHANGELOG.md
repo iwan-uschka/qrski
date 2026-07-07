@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-07-07
+
+### Fixed
+- Loading a template saved by a newer QRski now shows the specific "newer version" message instead of the generic corrupt-file error
+- Applying a template with an empty `blocks` array no longer leaves the editor without any content block
+- Out-of-range `maskPattern` values in templates are now clamped to the valid -1…7 range instead of causing a misleading encode error
+- Quiet zone restored from preferences is now clamped to 0–8, matching template loading
+- Version comparison for update checks now treats non-numeric components (e.g. pre-release suffixes) as zero instead of dropping them, which previously misaligned later components
+
+### Changed
+- Automatic update check now runs once per launch instead of once per window
+
+### Security
+- Update dialog now only opens release URLs that are `https` and on `github.com`
+
+### Internal
+- C encoder boundary now guards against >2 GiB input instead of trapping on `Int32` overflow
+- `AppState` is now `@MainActor`
+- `make_app.sh` uses a random temp directory for the partial Info.plist instead of a fixed `/tmp` path
+- `make_release.sh` restores `CHANGELOG.md` from backup if the release build fails partway through
+- New regression tests for mask-pattern validation and version parsing
+
 ## [1.2.1] - 2026-07-06
 
 ### Fixed
