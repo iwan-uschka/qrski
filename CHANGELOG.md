@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-07-08
+
 ### Fixed
 - Pinch-zoom in the preview no longer compounds exponentially (the gesture baseline was resynced mid-gesture)
 - "Check for Updates…" now shows an error dialog on HTTP errors (e.g. GitHub rate limiting) and unreadable responses instead of silently doing nothing
