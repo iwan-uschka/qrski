@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### Fixed
+- Pinch-zoom in the preview no longer compounds exponentially (the gesture baseline was resynced mid-gesture)
+- "Check for Updates…" now shows an error dialog on HTTP errors (e.g. GitHub rate limiting) and unreadable responses instead of silently doing nothing
+- `moduleSize` from templates and preferences is now clamped to 1–32, matching the export slider
+- Template colors with out-of-range, non-finite, or transparent components are now clamped to the 0–1 range and full opacity instead of silently rendering an invisible QR
+- Out-of-range `version`/`maskPattern` values restored from preferences are now clamped instead of causing a misleading encode error
+- Duplicate block ids in a hand-edited template no longer break block editing and deletion (ids are regenerated on collision)
+- A failed PNG export no longer persists the chosen module size
+
+### Security
+- Release-URL validation moved to `QRskiCore` (`isTrustedReleaseURL`) with tests; subdomains of github.com are now rejected (release pages live on github.com itself)
+- Template files larger than 1 MB are rejected before being read into memory
+- `ExportCore.generatePNG`/`generateSVG` now validate their inputs (module size, quiet zone) instead of relying on callers
+
+### Internal
+- `make_release.sh` now validates the version format, refuses to run on a dirty working tree or an existing tag, passes the version to `make_app.sh` explicitly, and publishes a SHA-256 checksum alongside the zip
+- Both build scripts use `set -euo pipefail`; `make_app.sh` no longer depends on the caller's working directory and warns instead of silently ignoring a failed Info.plist merge
+- File-menu delegate installation retries are capped instead of unbounded
+- Template save-panel filenames are sanitized (path separators stripped from block labels)
+- New regression tests for export input guards, release-URL trust, version-comparison edge cases, and PNG pixel colors
+
 ## [1.2.2] - 2026-07-07
 
 ### Fixed

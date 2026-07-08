@@ -7,11 +7,20 @@ import QRskiCore
 enum TemplateManager {
     private struct SchemaProbe: Decodable { let schemaVersion: Int }
 
+    // Real templates are a few KB; the cap only exists so a mistakenly selected huge
+    // file doesn't get slurped into memory and persisted to UserDefaults wholesale.
+    private static let maxTemplateBytes = 1 << 20
+
     @MainActor
     static func save(_ template: QRskiTemplate, suggestedName: String) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
-        let name = suggestedName.trimmingCharacters(in: .whitespaces)
+        // The suggested name comes from a free-text block label; strip path and
+        // filename separators so the panel gets a plain filename.
+        let name = suggestedName
+            .components(separatedBy: CharacterSet(charactersIn: "/:").union(.newlines))
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespaces)
         panel.nameFieldStringValue = "qrski-" + (name.isEmpty ? "template" : name) + ".json"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
@@ -32,6 +41,10 @@ enum TemplateManager {
         panel.allowedContentTypes = [.json]
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         do {
+            if let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size > maxTemplateBytes {
+                showError("This file is too large to be a QRski template.")
+                return nil
+            }
             let data = try Data(contentsOf: url)
             // QRskiTemplate.init(from:) throws on a future schemaVersion, so probe it first to
             // distinguish that case and show the specific message instead of the generic one.

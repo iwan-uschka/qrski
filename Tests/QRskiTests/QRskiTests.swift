@@ -251,6 +251,90 @@ final class PNGExportTests: XCTestCase {
         )
         XCTAssertEqual([UInt8](data.prefix(8)), Self.pngMagic)
     }
+
+    func testPNGRendersForegroundAndBackgroundColors() throws {
+        // Top-left module dark, rest light: pixel (1,1) must be fg, (6,6) bg
+        let m = QRMatrix(width: 2, modules: [[true, false], [false, false]])
+        let data = try XCTUnwrap(
+            ExportCore.generatePNG(matrix: m, moduleSize: 4, fg: .black, bg: .white, quietZone: 0)
+        )
+        let rep = try XCTUnwrap(NSBitmapImageRep(data: data))
+        let fgPixel = try XCTUnwrap(rep.colorAt(x: 1, y: 1)?.usingColorSpace(.sRGB))
+        let bgPixel = try XCTUnwrap(rep.colorAt(x: 6, y: 6)?.usingColorSpace(.sRGB))
+        XCTAssertLessThan(fgPixel.brightnessComponent, 0.1)
+        XCTAssertGreaterThan(bgPixel.brightnessComponent, 0.9)
+    }
+}
+
+// MARK: - Export input guards
+
+final class ExportGuardTests: XCTestCase {
+    private func solidMatrix(width: Int) -> QRMatrix {
+        QRMatrix(width: width, modules: Array(repeating: Array(repeating: true, count: width), count: width))
+    }
+
+    func testPNGRejectsZeroOrNegativeModuleSize() {
+        XCTAssertNil(ExportCore.generatePNG(matrix: solidMatrix(width: 5), moduleSize: 0, fg: .black, bg: .white))
+        XCTAssertNil(ExportCore.generatePNG(matrix: solidMatrix(width: 5), moduleSize: -3, fg: .black, bg: .white))
+    }
+
+    func testPNGRejectsNegativeQuietZone() {
+        XCTAssertNil(ExportCore.generatePNG(matrix: solidMatrix(width: 5), moduleSize: 1, fg: .black, bg: .white, quietZone: -1))
+    }
+
+    func testPNGRejectsHugeModuleSizeInsteadOfTrapping() {
+        // (width + 2*quietZone) * moduleSize must not overflow-trap or attempt an
+        // enormous CGContext allocation.
+        XCTAssertNil(ExportCore.generatePNG(matrix: solidMatrix(width: 5), moduleSize: Int.max, fg: .black, bg: .white))
+        XCTAssertNil(ExportCore.generatePNG(matrix: solidMatrix(width: 5), moduleSize: 100_000, fg: .black, bg: .white))
+    }
+
+    func testPNGRejectsHugeQuietZoneInsteadOfTrapping() {
+        XCTAssertNil(ExportCore.generatePNG(matrix: solidMatrix(width: 5), moduleSize: 1, fg: .black, bg: .white, quietZone: Int.max))
+    }
+
+    func testSVGClampsNegativeQuietZoneToZero() {
+        let svg = ExportCore.generateSVG(matrix: solidMatrix(width: 5), fg: .black, bg: nil, quietZone: -3)
+        XCTAssertTrue(svg.contains("viewBox=\"0 0 5 5\""))
+    }
+
+    func testSVGParsesAsXML() {
+        let svg = ExportCore.generateSVG(matrix: solidMatrix(width: 5), fg: .black, bg: .white)
+        XCTAssertNoThrow(try XMLDocument(xmlString: svg))
+    }
+}
+
+// MARK: - Release URL trust
+
+final class ReleaseURLValidationTests: XCTestCase {
+    private func trusted(_ s: String) -> Bool {
+        guard let url = URL(string: s) else { return false }
+        return isTrustedReleaseURL(url)
+    }
+
+    func testAcceptsGitHubReleasePage() {
+        XCTAssertTrue(trusted("https://github.com/iwan-uschka/qrski/releases/tag/v1.2.2"))
+    }
+
+    func testRejectsPlainHTTP() {
+        XCTAssertFalse(trusted("http://github.com/iwan-uschka/qrski"))
+    }
+
+    func testRejectsOtherHosts() {
+        XCTAssertFalse(trusted("https://evil.com/github.com"))
+        XCTAssertFalse(trusted("https://github.com.evil.com/x"))
+    }
+
+    func testRejectsSubdomains() {
+        // Release html_url values live on github.com itself; subdomains are
+        // deliberately rejected.
+        XCTAssertFalse(trusted("https://gist.github.com/x"))
+    }
+
+    func testRejectsNonHTTPSchemes() {
+        XCTAssertFalse(trusted("file:///etc/passwd"))
+        XCTAssertFalse(trusted("javascript:alert(1)"))
+    }
 }
 
 // MARK: - ErrorCorrectionLevel
@@ -327,6 +411,18 @@ final class VersionComparisonTests: XCTestCase {
     func testPreReleaseSuffixComparesAsZero() {
         // "1.0.0-rc1" parses as [1, 0, 0] — the suffix component compares as zero
         XCTAssertTrue(isVersionNewer("1.0.1", than: "1.0.0-rc1"))
+    }
+
+    func testEmptyAndGarbageRemoteIsNeverNewer() {
+        XCTAssertFalse(isVersionNewer("", than: "1.0.0"))
+        XCTAssertFalse(isVersionNewer("v", than: "1.0.0"))
+        XCTAssertFalse(isVersionNewer("not a version", than: "0.0.1"))
+    }
+
+    func testHugeComponentOverflowsToZeroFailSafe() {
+        // Int("99999999999999999999") overflows to nil → 0. An absurd remote version
+        // must fail safe: no update prompt rather than a bogus one.
+        XCTAssertFalse(isVersionNewer("99999999999999999999.0.0", than: "1.0.0"))
     }
 
     func testNonNumericMiddleComponentIsZeroNotDropped() {

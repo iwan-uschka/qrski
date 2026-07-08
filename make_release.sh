@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 cd "$(dirname "$0")"
 
 # Usage: bash make_release.sh <version>
@@ -17,6 +17,25 @@ VERSION="$1"
 TAG="v${VERSION}"
 ZIPFILE="QRski-${TAG}.zip"
 TODAY=$(date +%Y-%m-%d)
+
+# make_app.sh re-derives the version from CHANGELOG.md with a strict x.y.z grep;
+# a malformed version here (e.g. "1.3") would stamp the changelog but ship the
+# app with the *previous* version in Info.plist.
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "error: version must be x.y.z (got '${VERSION}')"
+  exit 1
+fi
+
+# The zip must be built from exactly the tree the release commit will contain.
+if [ -n "$(git status --porcelain)" ]; then
+  echo "error: working tree is not clean — commit or stash changes before releasing"
+  exit 1
+fi
+
+if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+  echo "error: tag ${TAG} already exists"
+  exit 1
+fi
 
 echo "→ Version: ${VERSION} (tag: ${TAG})"
 
@@ -45,8 +64,8 @@ awk -v ver="${VERSION}" -v date="${TODAY}" '
 
 echo "→ CHANGELOG.md updated"
 
-# Build app bundle
-bash make_app.sh
+# Build app bundle — pass the version explicitly so it can't drift from the tag
+bash make_app.sh "${VERSION}"
 
 if [ ! -d QRski.app ]; then
   echo "error: QRski.app not found — did make_app.sh fail?"
@@ -54,11 +73,16 @@ if [ ! -d QRski.app ]; then
 fi
 
 echo "→ Zipping QRski.app → ${ZIPFILE}..."
-rm -f "${ZIPFILE}"
+rm -f "${ZIPFILE}" "${ZIPFILE}.sha256"
 zip -r --symlinks "${ZIPFILE}" QRski.app
+
+# The app is unsigned and un-notarized, so a published checksum is the only
+# integrity signal users have for the download.
+shasum -a 256 "${ZIPFILE}" > "${ZIPFILE}.sha256"
 
 echo ""
 echo "✓ ${ZIPFILE} is ready ($(du -sh "${ZIPFILE}" | cut -f1))"
+echo "  SHA-256: $(cut -d' ' -f1 "${ZIPFILE}.sha256")"
 echo ""
 echo "Next steps:"
 echo ""
@@ -68,8 +92,9 @@ echo "     git add CHANGELOG.md && git commit -m 'Release ${VERSION}' && git pus
 echo ""
 echo "  2. Create the GitHub release:"
 echo ""
-echo "     gh release create ${TAG} ${ZIPFILE} \\"
+echo "     gh release create ${TAG} ${ZIPFILE} ${ZIPFILE}.sha256 \\"
 echo "       --title \"QRski ${VERSION}\" \\"
 echo "       --notes-file <(awk \"/^\#\# \[${VERSION}\]/{found=1; next} found && /^\#\# \[/{exit} found{print}\" CHANGELOG.md)"
 echo ""
-echo "  Users on macOS will need to right-click → Open the first time (Gatekeeper, unsigned app)."
+echo "  Note for users: the app is unsigned — on macOS 15+ they must allow it under"
+echo "  System Settings → Privacy & Security after the first blocked launch attempt."

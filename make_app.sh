@@ -1,13 +1,17 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+cd "$(dirname "$0")"
+
 # BSD mktemp only substitutes trailing X's, so make a temp dir and place the .plist inside it.
 PARTIAL_DIR=$(mktemp -d /tmp/qrski_partial.XXXXXX)
 PARTIAL_PLIST="$PARTIAL_DIR/partial.plist"
 trap 'rm -rf "$PARTIAL_DIR"' EXIT
 
-VERSION=$(grep -oE '\[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '[]')
-if [ -z "$VERSION" ]; then
-  echo "error: could not detect version from CHANGELOG.md"
+# Version comes from make_release.sh as $1; standalone runs derive it from the
+# latest release heading in CHANGELOG.md.
+VERSION="${1:-$(grep -oE '\[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '[]' || true)}"
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "error: invalid or missing version '${VERSION}' — pass x.y.z as \$1 or release it in CHANGELOG.md"
   exit 1
 fi
 echo "→ Version: ${VERSION}"
@@ -55,7 +59,9 @@ cat > QRski.app/Contents/Info.plist << EOF
 EOF
 
 if [ -f "$PARTIAL_PLIST" ]; then
-  /usr/libexec/PlistBuddy -c "Merge $PARTIAL_PLIST" QRski.app/Contents/Info.plist 2>/dev/null || true
+  if ! /usr/libexec/PlistBuddy -c "Merge $PARTIAL_PLIST" QRski.app/Contents/Info.plist; then
+    echo "warning: could not merge asset catalog partial plist — app icon keys may be missing from Info.plist"
+  fi
 fi
 
 echo "→ Ad-hoc signing..."

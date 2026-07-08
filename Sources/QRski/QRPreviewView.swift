@@ -5,7 +5,10 @@ struct QRPreviewView: View {
     @Bindable var appState: AppState
 
     @State private var zoomScale: Double = 1.0
-    @State private var gestureStartScale: Double = 1.0
+    // Baseline captured at pinch start; nil outside a gesture. MagnificationGesture
+    // deltas are cumulative since gesture start, so the baseline must stay fixed for
+    // the whole gesture — resyncing it mid-gesture compounds the zoom exponentially.
+    @State private var gestureStartScale: Double? = nil
 
     private let zoomBarHeight: Double = 44
     private var quietZone: Int { appState.quietZone }
@@ -50,10 +53,12 @@ struct QRPreviewView: View {
             .gesture(
                 MagnificationGesture()
                     .onChanged { delta in
-                        zoomScale = (gestureStartScale * delta).clamped(to: 0.2...1.0)
+                        let base = gestureStartScale ?? zoomScale
+                        gestureStartScale = base
+                        zoomScale = (base * delta).clamped(to: 0.2...1.0)
                     }
                     .onEnded { _ in
-                        gestureStartScale = zoomScale
+                        gestureStartScale = nil
                     }
             )
         } else {
@@ -91,12 +96,10 @@ struct QRPreviewView: View {
             Image(systemName: "minus.magnifyingglass")
                 .foregroundStyle(.secondary)
             Slider(value: $zoomScale, in: 0.2...1.0)
-                .onChange(of: zoomScale) { _, newVal in gestureStartScale = newVal }
             Image(systemName: "plus.magnifyingglass")
                 .foregroundStyle(.secondary)
             Button("Fit") {
                 zoomScale = 1.0
-                gestureStartScale = 1.0
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)

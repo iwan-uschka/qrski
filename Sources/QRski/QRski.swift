@@ -50,15 +50,19 @@ private class AppDelegate: NSObject, NSApplicationDelegate {
         fileMenu.delegate = delegate
     }
 
-    private func installFileMenuDelegate() {
+    private func installFileMenuDelegate(attempt: Int = 0) {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.fileMenuDelegate == nil else { return }
             if let fileMenu = NSApp.mainMenu?.item(withTitle: "File")?.submenu {
                 let delegate = FileMenuDelegate()
                 self.fileMenuDelegate = delegate
                 fileMenu.delegate = delegate
-            } else {
-                self.installFileMenuDelegate()
+            } else if attempt < 60 {
+                // Cap the retries: if the "File" title ever stops matching (e.g.
+                // localization), an uncapped loop would busy-schedule on the main
+                // queue forever. The menu-tracking observer above remains as the
+                // long-term recovery path.
+                self.installFileMenuDelegate(attempt: attempt + 1)
             }
         }
     }

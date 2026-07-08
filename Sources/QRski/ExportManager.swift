@@ -24,9 +24,10 @@ enum ExportManager {
             alert.runModal()
             return
         }
-        onModuleSizeUsed?(accessory.moduleSize)
         do {
             try data.write(to: url)
+            // Only after a successful write — a failed export shouldn't persist the size.
+            onModuleSizeUsed?(accessory.moduleSize)
             Logger.export.info("PNG exported: path=\(url.path) moduleSize=\(accessory.moduleSize) bytes=\(data.count)")
         } catch {
             Logger.export.error("PNG export failed: \(error)")

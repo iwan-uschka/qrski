@@ -4,7 +4,15 @@ import AppKit
 public enum ExportCore {
     public static let defaultQuietZone = 4
 
+    // Upper bound on the rendered side length; a 16384² RGBA bitmap is ~1 GiB,
+    // far above any legitimate export, and the cap keeps the arithmetic below
+    // safely inside Int.
+    private static let maxPixelSide = 16_384
+
     public static func generateSVG(matrix: QRMatrix, fg: Color, bg: Color?, quietZone: Int = defaultQuietZone) -> String {
+        // App callers clamp quietZone, but this is public API: a negative value
+        // would emit an invalid negative viewBox.
+        let quietZone = max(0, min(quietZone, maxPixelSide))
         let total = matrix.width + 2 * quietZone
         let fgHex = hexString(fg)
 
@@ -28,7 +36,14 @@ public enum ExportCore {
     }
 
     public static func generatePNG(matrix: QRMatrix, moduleSize: Int, fg: Color, bg: Color?, quietZone: Int = defaultQuietZone) -> Data? {
-        let total = (matrix.width + 2 * quietZone) * moduleSize
+        // App callers clamp these, but this is public API: a huge moduleSize would
+        // otherwise trap on Int overflow before the CGContext nil-check can reject it.
+        guard matrix.width > 0, matrix.width <= maxPixelSide,
+              moduleSize > 0, quietZone >= 0, quietZone <= maxPixelSide
+        else { return nil }
+        let side = matrix.width + 2 * quietZone
+        let (total, overflow) = side.multipliedReportingOverflow(by: moduleSize)
+        guard !overflow, total <= maxPixelSide else { return nil }
         let cs = CGColorSpaceCreateDeviceRGB()
         guard let ctx = CGContext(
             data: nil, width: total, height: total,

@@ -88,15 +88,17 @@ final class AppState {
             blocks = [PayloadBlock()]
         }
 
-        version = ud.integer(forKey: "version")
-        maskPattern = ud.object(forKey: "maskSet") != nil ? ud.integer(forKey: "maskPattern") : -1
+        // Clamp like applyTemplate — out-of-range persisted values don't crash, but
+        // they make every encode fail with a misleading "text may be too long" error.
+        version = max(0, min(ud.integer(forKey: "version"), 40))
+        maskPattern = ud.object(forKey: "maskSet") != nil ? max(-1, min(ud.integer(forKey: "maskPattern"), 7)) : -1
         if let rawEcl = ud.object(forKey: "ecl") as? Int,
            let eclVal = ErrorCorrectionLevel(rawValue: rawEcl) { ecl = eclVal }
         if let fg = loadColor(key: "fgColor") { fgColor = fg }
         if let bg = loadColor(key: "bgColor") { bgColor = bg }
         isTransparentBg = ud.bool(forKey: "transparentBg")
         matchViewportBackground = ud.bool(forKey: "matchViewportBg")
-        let ms = ud.integer(forKey: "moduleSize"); if ms > 0 { moduleSize = ms }
+        let ms = ud.integer(forKey: "moduleSize"); if ms > 0 { moduleSize = min(ms, 32) }
         // Clamp like applyTemplate — an unclamped quietZone drives the preview's O(n²) fill loop.
         if let qz = ud.object(forKey: "quietZone") as? Int { quietZone = max(0, min(qz, 8)) }
 
@@ -161,8 +163,14 @@ final class AppState {
         }
         isApplyingTemplate = true
         defer { isApplyingTemplate = false }
+        // A hand-edited template can carry duplicate block ids, which breaks SwiftUI
+        // list identity (edits and deletes hit the wrong block) — regenerate on collision.
+        var seenIDs = Set<UUID>()
+        let uniqueBlocks = template.blocks.map { block in
+            seenIDs.insert(block.id).inserted ? block : PayloadBlock(label: block.label, text: block.text)
+        }
         // Templates can carry an empty blocks array; the app requires at least one block.
-        blocks = template.blocks.isEmpty ? [PayloadBlock()] : template.blocks
+        blocks = uniqueBlocks.isEmpty ? [PayloadBlock()] : uniqueBlocks
         version = max(0, min(template.version, 40))
         // maskPattern valid domain is -1 (auto) through 7.
         maskPattern = max(-1, min(template.maskPattern, 7))
@@ -171,7 +179,9 @@ final class AppState {
         bgColor = bg
         isTransparentBg = template.isTransparentBg
         matchViewportBackground = template.matchViewportBackground
-        moduleSize = template.moduleSize
+        // Same range the PNG export slider allows; an unclamped value would persist
+        // to UserDefaults and wait for a future call site without its own clamp.
+        moduleSize = max(1, min(template.moduleSize, 32))
         // quietZone drives the checkerboard preview's O(n²) fill loop — an unclamped
         // value from a template file could otherwise freeze the UI on render.
         quietZone = max(0, min(template.quietZone, 8))
@@ -193,7 +203,12 @@ final class AppState {
     }
 
     private func colorFromComponents(_ c: [Double]) -> Color? {
-        guard c.count == 4 else { return nil }
-        return Color(red: c[0], green: c[1], blue: c[2], opacity: c[3])
+        // Hand-edited templates can carry out-of-range, non-finite, or semi-transparent
+        // components. The in-app pickers can't produce alpha ≠ 1 (supportsOpacity is
+        // false) and an alpha of 0 would silently export an invisible, unscannable QR,
+        // so clamp to 0…1 and force full opacity; transparency is isTransparentBg's job.
+        guard c.count == 4, c.allSatisfy(\.isFinite) else { return nil }
+        let clamped = c.map { min(max($0, 0), 1) }
+        return Color(red: clamped[0], green: clamped[1], blue: clamped[2], opacity: 1)
     }
 }

@@ -27,13 +27,21 @@ final class UpdateChecker {
         Logger.update.info("checking for updates (silent=\(silent))")
         Task {
             do {
-                let (data, _) = try await URLSession.shared.data(from: apiURL)
+                let (data, response) = try await URLSession.shared.data(from: apiURL)
+                // URLSession only throws on transport errors; HTTP errors (403 rate
+                // limit, 404, 500) still return a body, just without tag_name.
+                if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                    Logger.update.error("update check failed: HTTP \(http.statusCode)")
+                    if !silent { presentCheckFailed("The update server returned an error (HTTP \(http.statusCode)). Please try again later.") }
+                    return
+                }
                 guard
                     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                     let tag = json["tag_name"] as? String,
                     let releaseURL = json["html_url"] as? String
                 else {
                     Logger.update.error("unexpected API response format")
+                    if !silent { presentCheckFailed("The update server response could not be read. Please try again later.") }
                     return
                 }
 
@@ -64,11 +72,7 @@ final class UpdateChecker {
         if alert.runModal() == .alertFirstButtonReturn {
             // url comes straight from the GitHub API JSON — only open it if it's an https
             // github.com URL, never an arbitrary scheme/host from a tampered response.
-            guard let releaseURL = URL(string: url),
-                  releaseURL.scheme == "https",
-                  let host = releaseURL.host,
-                  host == "github.com" || host.hasSuffix(".github.com")
-            else {
+            guard let releaseURL = URL(string: url), isTrustedReleaseURL(releaseURL) else {
                 Logger.update.error("refusing to open untrusted release URL: \(url)")
                 return
             }
@@ -85,9 +89,13 @@ final class UpdateChecker {
     }
 
     private func presentError(_ error: Error) {
+        presentCheckFailed(error.localizedDescription)
+    }
+
+    private func presentCheckFailed(_ message: String) {
         let alert = NSAlert()
         alert.messageText = "Update Check Failed"
-        alert.informativeText = error.localizedDescription
+        alert.informativeText = message
         alert.addButton(withTitle: "OK")
         alert.runModal()
     }
