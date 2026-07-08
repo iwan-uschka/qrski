@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- License files: the app source is now MIT-licensed (`LICENSE`), and the vendored libqrencode 4.1.1 ships its GNU LGPL 2.1 text (`LICENSE.libqrencode`). Both are documented in the README and bundled into `QRski.app/Contents/Resources` so binary-only downloads carry them.
+
 ## [1.2.3] - 2026-07-08
 
 ### Fixed
