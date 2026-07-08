@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- `LICENSE` now contains only the unmodified MIT text (the appended note about bundled libqrencode/LGPL was breaking GitHub's license detection, showing "Unknown" instead of "MIT"); the explanation already lives in the README's License section
+
 ## [1.2.4] - 2026-07-08
 
 ### Added
