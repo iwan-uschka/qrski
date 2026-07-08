@@ -13,3 +13,7 @@ DerivedData/
 # Build artifacts
 QRski.app/
 QRski-v*.zip
+
+# Claude skill tooling metadata
+skills-lock.json
+QRski-v*.zip.sha256
