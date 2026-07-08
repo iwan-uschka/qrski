@@ -64,6 +64,10 @@ if [ -f "$PARTIAL_PLIST" ]; then
   fi
 fi
 
+echo "→ Bundling license files..."
+cp LICENSE QRski.app/Contents/Resources/LICENSE
+cp LICENSE.libqrencode QRski.app/Contents/Resources/LICENSE.libqrencode
+
 echo "→ Ad-hoc signing..."
 codesign --sign - --force QRski.app
 

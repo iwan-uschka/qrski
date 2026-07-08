@@ -53,3 +53,9 @@ QRcode_free(qrcode); QRinput_free(input);
 ```
 
 `QRcode_encodeMask` comes from `qrencode_inner.h`. `STATIC_IN_RELEASE` is defined as empty in `Package.swift` `cSettings` to give it external linkage. A custom `module.modulemap` limits the Swift-visible module to the two public headers only.
+
+## License
+
+The QRski application source code is released under the [MIT License](LICENSE).
+
+The bundled QR encoder, **libqrencode 4.1.1** (Copyright © 2006–2017 Kentaro Fukuchi), vendored in `Sources/CQREncode/`, is licensed separately under the **GNU Lesser General Public License, version 2.1 or later** — see [LICENSE.libqrencode](LICENSE.libqrencode). Its full source is included in this repository, satisfying the LGPL's relinking provision.
