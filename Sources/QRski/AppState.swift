@@ -144,8 +144,8 @@ final class AppState {
             version: version,
             maskPattern: maskPattern,
             ecl: ecl,
-            fgColor: colorAsComponents(fgColor) ?? [0, 0, 0, 1],
-            bgColor: colorAsComponents(bgColor) ?? [1, 1, 1, 1],
+            fgColor: ColorComponents.encode(fgColor) ?? [0, 0, 0, 1],
+            bgColor: ColorComponents.encode(bgColor) ?? [1, 1, 1, 1],
             isTransparentBg: isTransparentBg,
             matchViewportBackground: matchViewportBackground,
             moduleSize: moduleSize,
@@ -155,8 +155,8 @@ final class AppState {
 
     func applyTemplate(_ template: QRskiTemplate) {
         guard
-            let fg = colorFromComponents(template.fgColor),
-            let bg = colorFromComponents(template.bgColor)
+            let fg = ColorComponents.decode(template.fgColor),
+            let bg = ColorComponents.decode(template.bgColor)
         else {
             generationError = "Template contains invalid values and was not applied."
             return
@@ -189,26 +189,11 @@ final class AppState {
     }
 
     private func saveColor(_ color: Color, key: String) {
-        if let c = colorAsComponents(color) { ud.set(c, forKey: key) }
+        if let c = ColorComponents.encode(color) { ud.set(c, forKey: key) }
     }
 
     private func loadColor(key: String) -> Color? {
         guard let c = ud.array(forKey: key) as? [Double] else { return nil }
-        return colorFromComponents(c)
-    }
-
-    private func colorAsComponents(_ color: Color) -> [Double]? {
-        guard let ns = NSColor(color).usingColorSpace(.sRGB) else { return nil }
-        return [ns.redComponent, ns.greenComponent, ns.blueComponent, ns.alphaComponent]
-    }
-
-    private func colorFromComponents(_ c: [Double]) -> Color? {
-        // Hand-edited templates can carry out-of-range, non-finite, or semi-transparent
-        // components. The in-app pickers can't produce alpha ≠ 1 (supportsOpacity is
-        // false) and an alpha of 0 would silently export an invisible, unscannable QR,
-        // so clamp to 0…1 and force full opacity; transparency is isTransparentBg's job.
-        guard c.count == 4, c.allSatisfy(\.isFinite) else { return nil }
-        let clamped = c.map { min(max($0, 0), 1) }
-        return Color(red: clamped[0], green: clamped[1], blue: clamped[2], opacity: 1)
+        return ColorComponents.decode(c)
     }
 }

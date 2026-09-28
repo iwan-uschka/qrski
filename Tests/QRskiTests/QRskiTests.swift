@@ -126,6 +126,20 @@ final class QRCodeGeneratorTests: XCTestCase {
         let high = try XCTUnwrap(QRCodeGenerator.generate(text: "Hello World", version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.H))
         XCTAssertLessThanOrEqual(low.version, high.version)
     }
+
+    // breaks-if: the QRcode_encodeMask nil-check is removed (encoding a payload that
+    // overflows every version's data capacity currently returns nil instead of
+    // crashing or silently truncating the payload)
+    func testTextExceedingMaxCapacityReturnsNil() {
+        // An explicit version is only a lower bound — libqrencode auto-grows to a
+        // larger version if the text doesn't fit, up to version 40. 2953 bytes is the
+        // absolute max byte-mode payload (version 40, ECL L, the most permissive
+        // combination), so 2954 bytes can't fit at any version, even with auto-select.
+        let tooLong = String(repeating: "a", count: 2954)
+        XCTAssertNil(
+            QRCodeGenerator.generate(text: tooLong, version: 0, maskPattern: -1, ecl: ErrorCorrectionLevel.L)
+        )
+    }
 }
 
 // MARK: - SVG export
@@ -620,6 +634,134 @@ final class QRskiTemplateTests: XCTestCase {
         }
         """.data(using: .utf8)!
         XCTAssertThrowsError(try JSONDecoder().decode(QRskiTemplate.self, from: json))
+    }
+}
+
+// MARK: - ColorComponents
+
+final class ColorComponentsTests: XCTestCase {
+    func testRoundTrip() throws {
+        let encoded = try XCTUnwrap(ColorComponents.encode(.red))
+        let decoded = try XCTUnwrap(ColorComponents.decode(encoded))
+        XCTAssertEqual(try XCTUnwrap(ColorComponents.encode(decoded)), encoded)
+    }
+
+    // breaks-if: the component-count guard in ColorComponents.decode is removed
+    func testDecodeRejectsWrongComponentCount() {
+        XCTAssertNil(ColorComponents.decode([0, 0, 0]))
+        XCTAssertNil(ColorComponents.decode([0, 0, 0, 1, 1]))
+    }
+
+    // breaks-if: the isFinite guard in ColorComponents.decode is removed
+    func testDecodeRejectsNonFiniteComponents() {
+        XCTAssertNil(ColorComponents.decode([.nan, 0, 0, 1]))
+        XCTAssertNil(ColorComponents.decode([.infinity, 0, 0, 1]))
+    }
+
+    func testDecodeClampsOutOfRangeComponents() throws {
+        let decoded = try XCTUnwrap(ColorComponents.decode([-1, 2, 0.5, 1]))
+        let ns = try XCTUnwrap(NSColor(decoded).usingColorSpace(.sRGB))
+        XCTAssertEqual(ns.redComponent, 0)
+        XCTAssertEqual(ns.greenComponent, 1)
+    }
+
+    // breaks-if: the usingColorSpace(.sRGB) guard in ColorComponents.encode is removed
+    // (a pattern-backed color can't be converted to sRGB components)
+    func testEncodeRejectsColorThatCannotConvertToSRGB() {
+        let pattern = Color(nsColor: NSColor(patternImage: NSImage(size: NSSize(width: 1, height: 1))))
+        XCTAssertNil(ColorComponents.encode(pattern))
+    }
+}
+
+// MARK: - TemplateLoader
+
+final class TemplateLoaderTests: XCTestCase {
+    private func makeTemplate() -> QRskiTemplate {
+        QRskiTemplate(
+            schemaVersion: QRskiTemplate.currentSchemaVersion,
+            blocks: [PayloadBlock(label: "url", text: "https://example.com")],
+            version: 1,
+            maskPattern: -1,
+            ecl: .M,
+            fgColor: [0, 0, 0, 1],
+            bgColor: [1, 1, 1, 1],
+            isTransparentBg: false,
+            matchViewportBackground: false,
+            moduleSize: 10,
+            quietZone: 4
+        )
+    }
+
+    private func writeTempFile(_ data: Data) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+        try data.write(to: url)
+        return url
+    }
+
+    func testLoadDecodesValidTemplateFromFile() throws {
+        let url = try writeTempFile(try JSONEncoder().encode(makeTemplate()))
+        defer { try? FileManager.default.removeItem(at: url) }
+        guard case .success(let template) = TemplateLoader.load(from: url) else {
+            return XCTFail("expected success")
+        }
+        XCTAssertEqual(template.version, 1)
+    }
+
+    // breaks-if: the size guard in TemplateLoader.load is removed
+    func testLoadRejectsFileLargerThanMaxBytes() throws {
+        let oversized = Data(repeating: 0x20, count: TemplateLoader.maxBytes + 1)
+        let url = try writeTempFile(oversized)
+        defer { try? FileManager.default.removeItem(at: url) }
+        guard case .failure(.tooLarge) = TemplateLoader.load(from: url) else {
+            return XCTFail("expected .tooLarge")
+        }
+    }
+
+    func testLoadAcceptsFileExactlyAtMaxBytes() throws {
+        var data = try JSONEncoder().encode(makeTemplate())
+        // JSON tolerates trailing whitespace after the top-level value, so pad with
+        // spaces to land exactly on the boundary without breaking the decode.
+        let padding = TemplateLoader.maxBytes - data.count
+        XCTAssertGreaterThan(padding, 0)
+        data.append(Data(repeating: 0x20, count: padding))
+        let url = try writeTempFile(data)
+        defer { try? FileManager.default.removeItem(at: url) }
+        guard case .success = TemplateLoader.load(from: url) else {
+            return XCTFail("expected success at exactly maxBytes")
+        }
+    }
+
+    // breaks-if: the file-read guard in TemplateLoader.load is removed
+    func testLoadRejectsMissingFile() {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+        guard case .failure(.unreadable) = TemplateLoader.load(from: url) else {
+            return XCTFail("expected .unreadable")
+        }
+    }
+
+    // breaks-if: the schema-probe decode guard in TemplateLoader.decode is removed
+    func testDecodeRejectsCorruptedJSON() {
+        let data = Data("not json".utf8)
+        guard case .failure(.corrupted) = TemplateLoader.decode(data) else {
+            return XCTFail("expected .corrupted")
+        }
+    }
+
+    // breaks-if: the schemaVersion guard in TemplateLoader.decode is removed
+    func testDecodeRejectsFutureSchemaVersion() {
+        let json = """
+        {"schemaVersion": 999}
+        """.data(using: .utf8)!
+        guard case .failure(.unsupportedSchemaVersion) = TemplateLoader.decode(json) else {
+            return XCTFail("expected .unsupportedSchemaVersion")
+        }
+    }
+
+    func testDecodeAcceptsCurrentSchemaVersion() throws {
+        let data = try JSONEncoder().encode(makeTemplate())
+        guard case .success = TemplateLoader.decode(data) else {
+            return XCTFail("expected success at current schema version")
+        }
     }
 }
 
