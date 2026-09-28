@@ -5,12 +5,6 @@ import UniformTypeIdentifiers
 import QRskiCore
 
 enum TemplateManager {
-    private struct SchemaProbe: Decodable { let schemaVersion: Int }
-
-    // Real templates are a few KB; the cap only exists so a mistakenly selected huge
-    // file doesn't get slurped into memory and persisted to UserDefaults wholesale.
-    private static let maxTemplateBytes = 1 << 20
-
     @MainActor
     static func save(_ template: QRskiTemplate, suggestedName: String) {
         let panel = NSSavePanel()
@@ -40,24 +34,20 @@ enum TemplateManager {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json]
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
-        do {
-            if let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size > maxTemplateBytes {
-                showError("This file is too large to be a QRski template.")
-                return nil
-            }
-            let data = try Data(contentsOf: url)
-            // QRskiTemplate.init(from:) throws on a future schemaVersion, so probe it first to
-            // distinguish that case and show the specific message instead of the generic one.
-            let probe = try JSONDecoder().decode(SchemaProbe.self, from: data)
-            guard probe.schemaVersion <= QRskiTemplate.currentSchemaVersion else {
-                showError("This template was saved with a newer version of QRski and cannot be opened.")
-                return nil
-            }
-            let template = try JSONDecoder().decode(QRskiTemplate.self, from: data)
+        switch TemplateLoader.load(from: url) {
+        case .success(let template):
             Logger.export.info("Template loaded: path=\(url.path(percentEncoded: false))")
             return template
-        } catch {
-            Logger.export.error("Template load failed: \(error)")
+        case .failure(.tooLarge):
+            Logger.export.error("Template load failed: file too large")
+            showError("This file is too large to be a QRski template.")
+            return nil
+        case .failure(.unsupportedSchemaVersion):
+            Logger.export.error("Template load failed: unsupported schema version")
+            showError("This template was saved with a newer version of QRski and cannot be opened.")
+            return nil
+        case .failure(.unreadable), .failure(.corrupted):
+            Logger.export.error("Template load failed: file unreadable or corrupted")
             showError("Could not load template — the file may be invalid or corrupted.")
             return nil
         }
